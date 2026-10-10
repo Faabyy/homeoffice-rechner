@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homeoffice-Rechner</title>
+  <link rel="stylesheet" href="assets/app.css" id="css-modern">
+  <link rel="stylesheet" href="assets/klassisch.css" id="css-klassisch">
+  <link rel="stylesheet" href="assets/warm.css" id="css-warm">
+  <script src="assets/design.js"></script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Homeoffice">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Homeoffice-Rechner</h1>
+    <div class="month-nav">
+      <button type="button" id="prev-month" aria-label="Vorheriger Monat">◀</button>
+      <h2 id="month-label" aria-live="polite"></h2>
+      <button type="button" id="next-month" aria-label="Nächster Monat">▶</button>
+      <button type="button" id="go-today">Heute</button>
+    </div>
+    <div class="account">
+      <label id="owner-box" class="owner-box" hidden>Ansicht von <select id="owner-select"></select></label>
+      <span id="user-email"></span>
+      <button type="button" id="news-btn" class="link">Neuigkeiten</button>
+      <button type="button" id="logout" class="link">Abmelden</button>
+    </div>
+  </header>
+
+  <p id="app-error" class="form-error banner" role="alert"></p>
+  <p id="viewer-empty" class="banner hint" hidden>Dir wurden noch keine Konten zum Ansehen freigegeben.
+    Bitte wende dich an einen Admin.</p>
+
+  <main class="layout">
+    <section class="workspace">
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="planung">Planung</button>
+        <button type="button" role="tab" data-tab="zeiterfassung">Zeiterfassung</button>
+        <button type="button" role="tab" data-tab="einstellungen">Einstellungen</button>
+        <button type="button" role="tab" data-tab="benutzer" hidden>Benutzer</button>
+      </nav>
+
+      <div class="panel" id="tab-planung" role="tabpanel">
+        <div class="calendar" id="calendar"></div>
+        <div class="legend">
+          <span class="chip"><i class="swatch c-homeoffice"></i>Homeoffice</span>
+          <span class="chip"><i class="swatch c-buero"></i>Büro</span>
+          <span class="chip"><i class="swatch c-frei"></i>Frei</span>
+          <span class="chip"><i class="swatch c-urlaub"></i>Urlaub</span>
+          <span class="chip"><i class="swatch c-krank"></i>Krank</span>
+          <span class="chip"><i class="swatch c-schule"></i>Berufsschule/Studium</span>
+          <span class="chip"><i class="swatch c-feiertag"></i>Feiertag</span>
+          <span class="chip"><i class="swatch s-school"></i>Schulferien</span>
+          <span class="hint edit-only">Klick: planen · Rechtsklick: Urlaub, Krank … und Zeit erfassen</span>
+        </div>
+      </div>
+
+      <div class="panel" id="tab-zeiterfassung" role="tabpanel" hidden>
+        <form id="entry-form" class="edit-only" autocomplete="off" novalidate>
+          <h3 id="form-title">Arbeitszeit erfassen</h3>
+          <div class="form-row">
+            <label class="field">Datum
+              <span class="date-input">
+                <button type="button" id="day-prev" aria-label="Vorheriger Tag">◀</button>
+                <input id="f-date" name="date" class="w-date" title="z. B. 5.10. oder 5 · ↑/↓ wechselt den Tag">
+                <button type="button" id="day-next" aria-label="Nächster Tag">▶</button>
+              </span>
+            </label>
+            <label class="field">Beginn <input id="f-start" name="start" class="w-time" title="z. B. 830 · ↑/↓ ±15 Min."></label>
+            <label class="field">Ende <input id="f-end" name="end" class="w-time" title="z. B. 17 · ↑/↓ ±15 Min."></label>
+            <label class="field">Pause (Min.) <input id="f-break" name="break" class="w-break" title="↑/↓ ±5 Min."></label>
+            <fieldset class="field segmented">
+              <legend>Ort</legend>
+              <label><input type="radio" name="location" value="homeoffice" checked> Homeoffice</label>
+              <label><input type="radio" name="location" value="buero"> Büro</label>
+            </fieldset>
+            <div class="form-actions">
+              <button type="submit" id="submit-btn" class="primary">Hinzufügen</button>
+              <button type="button" id="cancel-btn" hidden>Abbrechen</button>
+            </div>
+          </div>
+          <p id="form-info" class="form-info"></p>
+          <p id="form-error" class="form-error" role="alert"></p>
+        </form>
+
+        <div class="table-card">
+          <table class="entries">
+            <thead>
+              <tr><th>Datum</th><th>Beginn</th><th>Ende</th><th>Pause</th><th>Arbeitszeit</th><th>Ort</th><th></th></tr>
+            </thead>
+            <tbody id="entries-body"></tbody>
+          </table>
+          <p id="no-entries" class="empty" hidden>Noch keine Einträge in diesem Monat.</p>
+        </div>
+      </div>
+
+      <div class="panel" id="tab-einstellungen" role="tabpanel" hidden>
+        <form id="settings-form" class="settings edit-only" novalidate>
+          <h3 class="form-title">Planung &amp; Arbeitszeit</h3>
+          <div class="settings-grid">
+            <span class="label">Wochentage</span>
+            <div id="s-weekdays" class="weekday-selects"></div>
+            <label class="label" for="s-daily">Sollstunden pro Tag</label>
+            <input id="s-daily" class="w-time">
+            <label class="label" for="s-limit">Max. Homeoffice-Anteil (%)</label>
+            <input id="s-limit" class="w-time">
+            <label class="label" for="s-start">Standard-Beginn</label>
+            <input id="s-start" class="w-time">
+            <label class="label" for="s-break">Standard-Pause (Min.)</label>
+            <input id="s-break" class="w-time">
+            <label class="label" for="s-state">Bundesland (Feiertage, Schulferien)</label>
+            <select id="s-state"></select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">Speichern</button>
+            <span id="settings-status" class="status" role="status"></span>
+          </div>
+        </form>
+
+        <section class="section edit-only">
+          <h3>Gleitzeitkonto</h3>
+          <p class="hint">Zählt nur Tage mit Einträgen. Korrekturen z. B. für den Stand vor der App.</p>
+          <form id="flex-form" novalidate>
+            <div class="form-row">
+              <label class="field">Datum <input id="x-date" class="w-date" title="z. B. 30.09.2026 oder 30.9."></label>
+              <label class="field">Korrektur <input id="x-minutes" class="w-time" title="±H:MM oder Minuten, z. B. -0:20 oder -20"></label>
+              <label class="field">Notiz <input id="x-note" class="w-note" maxlength="200" placeholder="z. B. Übertrag September"></label>
+              <button type="submit">Hinzufügen</button>
+            </div>
+            <p id="flex-error" class="form-error" role="alert"></p>
+          </form>
+          <div class="table-card">
+            <table class="entries">
+              <thead><tr><th>Datum</th><th>Korrektur</th><th>Notiz</th><th></th></tr></thead>
+              <tbody id="flex-body"></tbody>
+            </table>
+            <p id="no-flex" class="empty" hidden>Noch keine Korrekturen.</p>
+          </div>
+        </section>
+
+        <section class="section">
+          <h3>Darstellung</h3>
+          <div class="settings settings-grid">
+            <label class="label" for="s-design">Design</label>
+            <select id="s-design"></select>
+            <label class="label" for="s-scheme">Farbmodus</label>
+            <select id="s-scheme"></select>
+          </div>
+          <p class="hint">Gilt für diesen Browser.</p>
+        </section>
+
+        <section class="section">
+          <h3>Passwort ändern</h3>
+          <form id="password-form" class="settings" novalidate>
+            <div class="settings-grid">
+              <label class="label" for="p-current">Aktuelles Passwort</label>
+              <input id="p-current" type="password" autocomplete="current-password">
+              <label class="label" for="p-new">Neues Passwort</label>
+              <input id="p-new" type="password" autocomplete="new-password">
+              <label class="label" for="p-new2">Wiederholen</label>
+              <input id="p-new2" type="password" autocomplete="new-password">
+            </div>
+            <div class="form-actions">
+              <button type="submit">Passwort ändern</button>
+              <span id="password-status" class="status" role="status"></span>
+            </div>
+          </form>
+        </section>
+
+        <section class="section edit-only">
+          <h3>Daten</h3>
+          <div class="form-actions">
+            <button type="button" id="export-btn">Exportieren</button>
+            <label class="button" for="import-file">Importieren …</label>
+            <input type="file" id="import-file" accept=".json,application/json" hidden>
+            <span id="data-status" class="status" role="status"></span>
+          </div>
+          <p class="hint">Beim Import werden deine aktuellen Daten ersetzt.</p>
+          <p id="viewers-info" class="hint"></p>
+        </section>
+
+        <section class="section">
+          <h3>Hilfe &amp; Kontakt</h3>
+          <p class="hint">Das erledigt ein Admin:</p>
+          <ul class="hint help-list">
+            <li class="edit-only">Lesezugriff für andere (z. B. deine Führungskraft) einrichten oder entfernen</li>
+            <li class="viewer-only">Weitere Konten zum Ansehen freigeben</li>
+            <li>Personen einladen, Passwort-Links, Konten löschen</li>
+          </ul>
+          <p id="admin-contacts" class="hint"></p>
+        </section>
+      </div>
+
+      <div class="panel" id="tab-benutzer" role="tabpanel" hidden>
+        <form id="invite-form" class="settings" novalidate>
+          <h3>Person einladen</h3>
+          <div class="form-row">
+            <label class="field">E-Mail-Adresse <input id="i-email" type="email" class="w-email"></label>
+            <label class="field">Rolle
+              <select id="i-role">
+                <option value="user">Nutzer</option>
+                <option value="admin">Admin (darf selbst einladen)</option>
+                <option value="viewer">Nur Lesen (sieht freigegebene Konten)</option>
+              </select>
+            </label>
+            <button type="submit" class="primary">Einladungslink erstellen</button>
+          </div>
+          <p id="invite-error" class="form-error" role="alert"></p>
+        </form>
+        <div id="link-box" class="link-box" hidden></div>
+
+        <h3 class="section">Konten</h3>
+        <div class="toolbar">
+          <input id="u-search" type="search" class="w-email" placeholder="E-Mail suchen …" aria-label="Konten durchsuchen">
+          <select id="u-filter" aria-label="Konten filtern">
+            <option value="">Alle Konten</option>
+            <option value="admin">Admins</option>
+            <option value="user">Nutzer</option>
+            <option value="viewer">Nur Lesen</option>
+            <option value="locked">Gesperrt</option>
+          </select>
+          <span id="u-count" class="hint"></span>
+        </div>
+        <div class="table-card">
+          <table class="entries accounts">
+            <thead><tr><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Freigaben</th><th>Seit</th><th></th></tr></thead>
+            <tbody id="users-body"></tbody>
+          </table>
+          <p id="no-users" class="empty" hidden>Keine passenden Konten.</p>
+        </div>
+
+        <h3 class="section">Offene Links</h3>
+        <div class="table-card">
+          <table class="entries">
+            <thead><tr><th>E-Mail</th><th>Art</th><th>Gültig bis</th><th></th></tr></thead>
+            <tbody id="links-body"></tbody>
+          </table>
+          <p id="no-links" class="empty" hidden>Keine offenen Einladungen oder Passwort-Links.</p>
+        </div>
+
+        <h3 class="section">Protokoll</h3>
+        <div class="table-card log-card">
+          <table class="entries">
+            <thead><tr><th>Zeit</th><th>Admin</th><th>Aktion</th><th>Konto</th><th>Details</th></tr></thead>
+            <tbody id="log-body"></tbody>
+          </table>
+          <p id="no-log" class="empty" hidden>Noch keine Admin-Aktionen.</p>
+        </div>
+
+        <h3 class="section">Sicherung</h3>
+        <p id="backup-info" class="hint"></p>
+      </div>
+    </section>
+
+    <aside class="summary" id="summary" aria-live="polite"></aside>
+  </main>
+
+  <div id="context-menu" class="context-menu" role="menu" hidden></div>
+  <dialog id="account-dialog" class="news-dialog account-dialog" aria-labelledby="account-title">
+    <div id="account-detail"></div>
+  </dialog>
+  <dialog id="news-dialog" class="news-dialog" aria-labelledby="news-title">
+    <form method="dialog">
+      <h3 id="news-title">Neuigkeiten</h3>
+      <div id="news-list" class="news-list"></div>
+      <p id="news-contacts" class="hint"></p>
+      <div class="form-actions"><button type="submit" class="primary">Verstanden</button></div>
+    </form>
+  </dialog>
+  <script src="assets/logic.js"></script>
+  <script src="assets/changelog.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

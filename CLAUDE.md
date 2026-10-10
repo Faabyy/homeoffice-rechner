@@ -1,0 +1,61 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Purpose
+
+"Homeoffice-Rechner": a multi-user web app to plan and log working days as Homeoffice or Büro and check them against a monthly home office limit (default max. 30 % of working **hours**). Login with e-mail + password, accounts by invitation only. UI text is German; code identifiers and comments are English. Intended for publication as a public GitHub repository: never commit `webapp/lib/config.php`, databases, `lokal/php/` or exports (see `.gitignore`), and keep setup keys, database names, personal paths, the domain and the hoster out of every committed file.
+
+Deployment target: typical shared webspace — **PHP + Apache, FTP access only** (no shell, no Composer, no Node, no Python). So: plain PHP without dependencies, SQLite by default (MySQL optional via config), static JS/CSS without build step. Keep PHP compatible down to 7.4 (no `match`, `str_contains`, nullsafe, named args) — the owner's server actually runs PHP 7.4.33. `ANLEITUNG.md` is the general upload/setup guide for anyone (`README.md` the project overview) — update them when deployment steps or features change. After changing `webapp/`, put the changed files (with their `webapp/`-relative paths) into a folder `update-<topic>/` in the project root so the owner can upload them via FTP — no zip.
+
+Every change gets an entry in `CHANGELOG.md` (dated, technical, names the update folder) and, if users notice it, in `webapp/assets/changelog.js` (German, user-facing, newest first, unique stable `id`). The app opens the "Neuigkeiten" dialog once for entries newer than the last seen id (localStorage per account; first time: entries since account creation). Every account sees every entry, so `changelog.js` is written for all users (no admin-only, FTP or technical instructions — those go into `CHANGELOG.md` / `ANLEITUNG.md`); use `ask` when only an admin can help (users are pointed to the admins listed in Einstellungen → Hilfe & Kontakt, from `GET me` → `admins`).
+
+## Commands
+
+`lokal/` holds a portable PHP for Windows (`lokal/php/php.exe`, pdo_sqlite enabled; not in the repo, see ANLEITUNG.md), a local config (`require_https` false) and the local SQLite DB in `lokal/data/` — never upload it. The owner starts the app locally by double-clicking `lokal/starten.bat` (http://127.0.0.1:8080/; opens `setup.php?key=lokal-einrichtung-123456` while no DB exists). The config file is chosen by the `HOR_CONFIG` env var (`lib/bootstrap.php`), falling back to `webapp/lib/config.php` — that file is the owner's real server config (production setup key, DB filename); don't overwrite it, template changes go into `config.sample.php`. On Linux: `HOR_CONFIG=$PWD/lokal/config.php php -S 127.0.0.1:8080 -t webapp`.
+
+Tests are Python (stdlib only) driving a PHP dev server and a headless Edge/Chrome — `test_logic.py` runs `logic.js` in the browser too, so all three suites need a browser (missing PHP/browser → tests skip, not fail). They use `lokal/php/php.exe` on Windows (otherwise `PHP_BIN` / `php` on PATH, e.g. on the owner's Linux machine) and find Edge/Chrome/Chromium automatically (or `BROWSER_BIN`); each test gets its own temporary config and database.
+
+- All tests: `python -m unittest discover -s tests -t .` (Linux: `python3`)
+- One test: `python -m unittest tests.test_api.ApiTest.test_users_only_see_and_change_their_own_data`
+- Syntax check: `php -l webapp/api.php` (Windows: `lokal/php/php.exe -l …`; keep 7.4 compatibility in mind)
+- `demo/starten.sh` serves `webapp/` on http://127.0.0.1:8090/ with a demo database (`demo/data/demo.sqlite`, login in `demo/LIESMICH.md`, refill with `demo/seed.py`) — handy for looking at UI changes; never uploaded.
+- `.htaccess` is ignored by `php -S`, so folder protection can only be verified on the real server (setup.php checks it).
+
+
+## Architecture
+
+- `webapp/` is exactly what gets uploaded. Entry points: `index.php` (app, login required), `login.php` (login, and `?token=` for invitation/reset links), `api.php?action=…` (JSON API), `setup.php?key=…` (server checks + first admin). `lib/` (PHP code, HTML templates, `config.php`) and `data/` (SQLite file) are denied to the web by `.htaccess`.
+- **All calculation runs in the browser** (`assets/logic.js`: parsing of German input, holidays per state, day classification, forecast, prefill, import normalization). `assets/app.js` loads the user's whole data once (`GET data`), computes locally, and sends single changes (`POST entry`, `plan`, `settings`, …), then applies them to its local copy. The server (`lib/data.php`) only validates and stores — it re-validates every field and re-checks overlaps, so keep validation rules and German messages in sync between `logic.js` and `data.php`.
+- `lib/auth.php`: sessions are random tokens in an HttpOnly/SameSite=Lax cookie, stored as SHA-256 hashes; invitation/reset links likewise (single use, 7 days / 24 h). Login is rate-limited via `login_failures`. CSRF protection = POST must be `application/json` + `Origin` must match.
+- `lib/admin.php`: account management (`admin-*` actions in `api.php`). Every admin action calls `admin_log()` (table `admin_log`, shown in the Benutzer tab; labels in `ADMIN_ACTIONS` in `app.js`). Admins can't change their own role, lock or delete themselves. Locked accounts (`users.locked_at`) are excluded in `current_user()`, refused in `login()` (only after a correct password) and `redeem_link()`. The Benutzer tab is a filterable table; clicking a row opens `#account-dialog` (`renderAccount()`), whose actions go through `accountAction()` (reload overview, re-render, status in the sticky footer).
+- Three designs style the same markup: `assets/app.css` ("Modern", default), `assets/klassisch.css` ("Klassisch") and `assets/warm.css` ("Warm" — a copy of app.css with its palette replaced plus a "Warm: components" override block at the end). `assets/design.js` (in `<head>` of `app.html`/`login.html` after all `<link id="css-…">`) disables the ones not chosen, keeping the current sheet until a newly chosen one has loaded; the choice is per browser (localStorage `design`, Einstellungen → Darstellung). It also applies the colour mode (localStorage `farbmodus`: auto/light/dark → `<html data-scheme>`); every stylesheet repeats its dark palette in the `prefers-color-scheme` block (`:root:not([data-scheme="light"])`) and in `:root[data-scheme="dark"]` — keep both in sync. Control borders use `--field` (≥ 3:1), decorative lines `--line`. Markup or class changes usually need all three stylesheets; check hover/dark-mode contrast in each. The CSP blocks inline `<style>`, so test-time style injection needs `adoptedStyleSheets`.
+- Access restriction (`config` `access`: `blocked_networks` IP/CIDR, `mobile_only` by User-Agent) lives in `auth.php` `access_restriction()`; it applies to non-admins only — `current_user()` returns null for them, `login()` and `redeem_link()` refuse with 403 (the link stays valid). Tested in `tests/test_access.py`.
+- Mobile app = installable web app only (`manifest.webmanifest`, icons in `assets/icons/`, head tags in `lib/app.html` and `lib/login.html`); no service worker, no native wrapper. Don't add `AddType` for `.webmanifest` to `.htaccess` (suspected of causing a 500 on the webspace).
+- `lib/db.php` creates the schema on first connection; SQL must stay portable between SQLite and MySQL (no upserts; `end` is reserved → `end_time`).
+- Every query on user data must be scoped by `user_id` — `tests/test_api.py` checks that users can't see or change each other's data.
+- Read-only accounts (`users.is_viewer`, invited with role "Nur Lesen"; never admin) have no own data: `api.php` lets them only use `me`, `password`, `shared` and `shared-data&owner=` (checked against `viewer_access`, which admins edit via `admin-viewer-access`). In `app.js` `state.readOnly` disables planning/editing; elements with class `edit-only` are hidden by `body.read-only`. Owners get `viewers` (who may read their data) with `GET data`.
+
+## Day rules (logic.js `monthDays`)
+
+Precedence: holiday > planned day off > workday. Day-off plan statuses are `frei`, `schule` (Berufsschule/Studium), `krank`, `urlaub` (`Logic.OFF_TYPES`, `PLAN_STATUSES` in data.php): they differ only in label/color, all count exactly like `frei`; they are set via the right-click menu, a click resets them. Settings assign each weekday a type: Arbeitstag (`settings.workdays`), Berufsschule/Studium (`settings.schoolDays`, optional field — older stored settings lack it, the server merges defaults) or Frei. A school day, and a Mon–Fri that is no workday, is a day off by default (`defaultOff`, `defaultOffType` "schule"/"frei") but can be planned as Homeoffice/Büro or another day-off type per day (stored as a normal plan row; choosing the default type = no plan row). Sat/Sun set to Frei stay non-workdays. A workday can also be set to Homeoffice or Büro (`settings.homeOfficeDays` / `officeDays`, optional, subsets of `workdays`): without a plan row it counts as planned with that location (`Logic.defaultLocation` / `plannedLocation`, also used for prefill); in `app.js` `defaultStatus(day)` unifies these defaults with `defaultOffType` for the menu ("(Standard)") and the click cycle. School holidays are display only: `app.js` fetches them per state and year from openholidaysapi.org in the browser (allowed in the CSP `connect-src` in `lib/bootstrap.php`, cached 7 days in localStorage); they never affect the forecast.
+
+## Flextime (logic.js `flexSummary`)
+
+Every day with logged entries has the daily target (`settings.dailyMinutes`) as "Soll"; days without entries don't count. Manual corrections (`flex_adjustments` table, e.g. a carry-over from before using the app) are added on their date. The sidebar shows the month's flextime and the balance at the end of the displayed month.
+
+## Automatic backups
+
+`lib/backup.php`: `maybe_backup()` runs on every logged-in API request (no cron on the webspace); when the newest file in `data/backups/` is older than `backup_days` (default 7, config key, 0 = off) it writes `sicherung-<date>-<random>.sqlite` via `VACUUM INTO` (fallback: locked file copy), keeps the newest `backup_keep` (default 8), never throws, retries at most hourly after a failure (`.lock` file). SQLite only. The admin overview reports status (`backup`), shown in the Benutzer tab.
+
+## Database migrations
+
+`ensure_schema()` in `lib/db.php` creates each missing table (with its indexes) when the newest table is missing; existing tables and data are never touched. When adding a table: append it to `$tables` and change the table checked first in `ensure_schema()` to the new one. New columns on existing tables go into the `CREATE TABLE` statement and into `$columns` (added via `ALTER TABLE … ADD COLUMN`), and need a new table checked first as well, since migrations only run while that one is missing. Changing existing columns needs explicit migration code. The owner's server database already holds real data.
+
+## Forecast rules (logic.js)
+
+Logged time beats planning for a day; planned, unlogged workdays count with the daily target; unplanned, unlogged workdays count toward the total as non-home-office (so the forecast is a lower bound); `remaining` = limit × expected total − expected home office minutes.
+
+## UI decisions by the owner
+
+Simple, flat design. Calendar: single click cycles the plan (queued so rapid clicks apply in order); right click opens a menu (time entry for the day, set plan). The owner explicitly does not want a double-click action on calendar days. The break field is always prefilled with the default break.

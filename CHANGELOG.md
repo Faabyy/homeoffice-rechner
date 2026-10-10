@@ -1,0 +1,137 @@
+# Changelog
+
+Alle Änderungen am Homeoffice-Rechner, neueste zuerst – technisch, für Betreiber und Entwicklung (mit Upload-Ordnern
+und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `webapp/assets/changelog.js` (das
+„Neuigkeiten“-Fenster in der App) – beide Dateien zusammen pflegen.
+
+Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
+Sitzungsverlauf.
+
+## 2026-10-10 – Handy-App, Zugriffssperre, Vorbereitung für GitHub
+
+Upload-Ordner: `update-handy-zugriff/` – enthält auch alle Dateien aus `update-design/` (die Einträge vom
+05.10. darunter waren noch nicht hochgeladen) und repariert den Server nach dem Upload vom 09.10.
+
+Eingebaut aus den Änderungen vom 09.10., die auf dem alten Stand vom 02.10. entstanden waren:
+
+- Reparatur: Am 09.10. wurden `lib/auth.php`, `lib/app.html`, `lib/login.html`, `lib/config.php` und
+  `.htaccess` durch Fassungen vom 02.10. ersetzt. Die alte `auth.php` deklariert `admin_overview()` ein
+  zweites Mal (heute in `lib/admin.php`) → HTTP 500. Der Upload-Ordner enthält die aktuellen Fassungen.
+  `diagnose.php` vom Server löschen.
+- Installierbare Web-App: `manifest.webmanifest`, Symbole in `assets/icons/` (weißes Haus auf `#2563eb`),
+  Manifest-, Icon- und Apple-Tags im `<head>` von `lib/app.html` und `lib/login.html`. Kein Service Worker.
+  Kein `AddType` für `.webmanifest` in der `.htaccess` (stand im Verdacht, den 500er auszulösen).
+- Zugriffssperre für Nicht-Admins (`config` `access`: `blocked_networks` als IP/CIDR, `mobile_only` per
+  User-Agent): `access_restriction()` in `lib/auth.php`; `current_user()` liefert für gesperrte Benutzer
+  null (die Sitzung bleibt auf dem erlaubten Gerät gültig), `login()` und `redeem_link()` lehnen mit 403
+  ab, der Einladungslink bleibt gültig. Admins sind ausgenommen. `config.sample.php`: Block mit Standard
+  „aus“.
+- Tests: `tests/test_access.py` (3 Tests), `PhpServer(extra_config)` in `tests/support.py`.
+- GitHub-Vorbereitung: `.gitignore` (Konfiguration, Datenbanken, `lokal/php/`, Exporte, Upload-Ordner,
+  IDE-Dateien, `CLAUDE.local.md`), `lokal/data/.gitkeep`, `README.md`; `ANLEITUNG.md` allgemein
+  umgeschrieben (kein Hoster, kein Schlüssel, kein persönlicher Pfad; neu: Konfiguration anlegen, Handy-App,
+  Zugriff einschränken, nginx, lokal unter Linux). `lokal/starten.bat` nimmt `php` aus dem `PATH`, wenn
+  `lokal/php/php.exe` fehlt.
+
+## 2026-10-05 – Farbmodus-Schalter, Rahmenkontraste, Wochentag-Beschriftung
+
+Upload-Ordner: `update-design/` (zusammen mit den Einträgen darunter, jetzt in `update-handy-zugriff/`)
+
+- *Einstellungen → Darstellung → Farbmodus*: Automatisch (System), Hell oder Dunkel, pro Browser (localStorage
+  `farbmodus`), auch auf der Anmeldeseite. `design.js` setzt `<html data-scheme>`; jedes Stylesheet hat die dunklen
+  Farben zweimal: im `prefers-color-scheme`-Block (außer bei `data-scheme="light"`) und für `data-scheme="dark"`.
+- Rahmen von Eingabefeldern, Auswahllisten, Knöpfen und Ort-Schalter erreichen jetzt mindestens 3:1 zum Hintergrund
+  (WCAG 1.4.11): neue Farbe `--field` in „Modern“ und „Warm“ (vorher 1,2–1,5:1), „Klassisch“ dunkel 3,05 → 3,87.
+  Kartenrahmen in „Warm“ deutlicher (1,35 → 1,56 hell, 2,21 dunkel).
+- Wochentage: „Arbeitstag“ heißt jetzt „Arbeitstag (nicht vorbelegt)“; die Wochentage stehen in einer eigenen,
+  vollen Zeile (vorher ragten die zwei Spalten bei ca. 1024 px Fensterbreite aus der Karte), unter 700 px einspaltig.
+
+## 2026-10-05 – Drittes Design („Warm“)
+
+Upload-Ordner: `update-design/` (zusammen mit dem Eintrag darunter, jetzt in `update-handy-zugriff/`)
+
+- Neues Design „Warm“ (`assets/warm.css`, baut auf `app.css` auf; Unterschiede im Block „Warm: components“ am
+  Ende): Elfenbein-/Sandtöne, gedämpfter Tonrot-Akzent, abgerundete Karten, Reiter als Segment-Schalter,
+  Serifen-Überschriften. Kontrast geprüft wie bei den anderen (Text ≥ 4,5:1, Hover ≥ 3:1, hell und dunkel).
+- Behoben in allen Designs: „max. 30,0 %“ unter dem Balken stieß an „Noch … möglich“ (zu wenig Abstand); große Zahlen
+  der Auswertung dichter an ihren Überschriften (Klassisch, Warm); Tageszahl und Beschriftung im Kalender zu eng;
+  Schulferien-Name in schmalen Kalenderkacheln mitten im Wort abgeschnitten (jetzt „Herbstf…“).
+- Geprüft per Skript in 3 Designs × hell/dunkel × Desktop/Handy × 7 Ansichten (Tabs, Neuigkeiten, Kontodetails,
+  Menü): Textkontrast, Hover-Kontrast, Überlappungen, Abstände unter 6 px, abgeschnittene Texte, Seitenbreite.
+
+## 2026-10-05 – Zweites Design („Klassisch“) und Darstellungsfehler
+
+Upload-Ordner: `update-design/`
+
+- Unter *Einstellungen → Darstellung* lässt sich zwischen „Modern“ (bisher, Standard) und „Klassisch“ wählen
+  (eckig, Serifen-Überschriften, dunkelblaue Kopfleiste, Kalender als Raster). Neue Dateien `assets/klassisch.css`
+  und `assets/design.js`; die Wahl gilt pro Browser (localStorage) und auch auf der Anmeldeseite. Beim Umschalten
+  bleibt das alte Stylesheet aktiv, bis das neue geladen ist (sonst kurz ungestylte Seite).
+- Behoben: Primärknöpfe (z. B. „Verstanden“) im klassischen Dunkelmodus beim Hovern unsichtbar; deaktivierte Knöpfe
+  im modernen Design nicht erkennbar; Bildlaufleiste über dem Text in der Neuigkeiten-Liste und im Protokoll.
+- Geprüft: Textkontrast aller Bedienelemente in beiden Designs, hell und dunkel, normal und beim Hovern; jeder Text
+  erreicht mindestens 4,5:1 (WCAG AA). „Klassisch“ hat dafür kräftigere Farben, Linien und Neben-Texte bekommen.
+- Übersichtlichkeit: Hinweistexte gekürzt oder entfernt (Einstellungen, Daten, Hilfe & Kontakt, Benutzer,
+  Kontodetails, Anmeldeseite); Wochentage als zweispaltiges Raster; Eingabefelder, Auswahlfelder und Knöpfe einer
+  Zeile gleich hoch; der gewählte Ort in der Zeiterfassung (Klassisch) sieht nicht mehr wie ein Hauptknopf aus.
+- Lokale Demo mit Beispieldaten in `demo/` (wird nicht hochgeladen).
+
+## 2026-10-05 – Kontoverwaltung für Admins
+
+Upload-Ordner: `update-kontoverwaltung/` (enthält auch die Dateien aus `update-heute/`)
+
+- Nur für Admins: Kontenliste mit Suche/Filter und Detailansicht je Konto (Rolle, E-Mail, Sperren, Abmelden,
+  Freigaben, Export, Löschen) sowie ein Protokoll aller Admin-Aktionen. Code in `lib/admin.php` (neu).
+- Datenbank: neue Tabelle `admin_log`, neue Spalte `users.locked_at` (werden automatisch angelegt).
+
+## 2026-10-05 – Heutiger Tag im Kalender
+
+Upload-Ordner: `update-heute/`
+
+- Der heutige Tag hat einen Rahmen in der Akzentfarbe, die Tageszahl steht in einem kleinen farbigen Kreis.
+
+## 2026-10-05 – Wochentage als Homeoffice/Büro, Neuigkeiten, Hilfe & Kontakt
+
+Upload-Ordner: `update-wochentage/`
+
+- **Wochentage:** Unter *Einstellungen → Wochentage* gibt es zusätzlich „Homeoffice“ und „Büro“. Solche
+  Wochentage sind Arbeitstage und gelten ohne eigenen Planungseintrag als so geplant (Kalender, Prognose,
+  Vorbelegung der Zeiterfassung). Ein Klick im Kalender wechselt Standard → anderer Ort → Frei → Standard;
+  im Rechtsklick-Menü ist der Standard mit „(Standard)“ markiert (auch bei Frei/Berufsschule).
+  Neue optionale Einstellungsfelder `homeOfficeDays`, `officeDays` (Teilmengen von `workdays`); ältere
+  gespeicherte Einstellungen bekommen sie beim Laden als leere Listen. Keine Datenbankänderung.
+- **Neuigkeiten:** Nach einem Update öffnet sich einmal ein Fenster mit den Änderungen (Inhalt aus
+  `assets/changelog.js`); jederzeit über „Neuigkeiten“ oben rechts. Was gesehen wurde, merkt sich der
+  Browser (localStorage, pro Konto) – auf einem neuen Gerät erscheinen die Einträge seit Kontoerstellung noch einmal.
+- **Hilfe & Kontakt:** Neuer Abschnitt unter *Einstellungen*, der erklärt, wofür man einen Admin braucht
+  (Lese-Konten und Freigaben, Einladungen, Passwort-Links, Konto löschen), mit den E-Mail-Adressen der Admins
+  (`GET me` liefert jetzt `createdAt` und `admins`). Hinweise auch unter *Daten* (Lesezugriff), im Hinweis für
+  Lese-Konten ohne Freigabe und auf der Anmeldeseite (Passwort vergessen).
+
+## 2026-10-05 – Automatische Datensicherung
+
+Upload-Ordner: `update-backup/`
+
+- Alle 7 Tage (beim ersten Aufruf danach) Kopie der SQLite-Datenbank nach `data/backups/`, die letzten 8
+  bleiben. Einstellbar mit `backup_days` / `backup_keep` in `lib/config.php`. Anzeige im Tab *Benutzer → Sicherung*.
+
+## 2026-10-05 – Lese-Konten und Cache-Fix
+
+Upload-Ordner: `update-lesekonten/`
+
+- Neue Rolle **„Nur Lesen“**: kein eigenes Erfassen, sieht Planung, Einträge und Auswertung der Konten, die ein
+  Admin unter „Darf sehen“ freigibt. Besitzer sehen unter *Einstellungen → Daten*, wer ihre Daten lesen darf.
+  Datenbank: neue Tabelle `viewer_access`, neue Spalten `users.is_viewer`, `tokens.is_viewer` (automatisch ergänzt).
+- JS/CSS werden mit Versionsnummer (`?v=<Änderungszeit>`) ausgeliefert, damit nach Updates keine alten Dateien
+  aus dem Browser-Cache geladen werden (Fehler „Cannot read properties of null (reading 'checked')“).
+- Tests laufen auch unter Linux (System-PHP, Chromium).
+
+## 2026-10-02 – Web-Version
+
+- Umstieg von der früheren Desktop-Version auf eine PHP-Web-App für einen Shared-Webspace (SQLite, optional MySQL).
+- Anmeldung mit E-Mail und Passwort, Konten nur per Einladungslink, Passwort-Links, Admin-Verwaltung, `setup.php`.
+- Planung im Kalender (Klick: Homeoffice → Büro → Frei; Rechtsklick: Urlaub, Krank, Berufsschule/Studium,
+  Zeit erfassen), Feiertage nach Bundesland, Schulferien (nur Anzeige, openholidaysapi.org).
+- Wochentage als Arbeitstag, Berufsschule/Studium oder Frei.
+- Zeiterfassung mit Prognose des Homeoffice-Anteils, Gleitzeitkonto mit Korrekturen.
+- Export/Import, auch der Datei der Desktop-Version (`eintraege.json`).

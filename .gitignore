@@ -1,0 +1,27 @@
+# Server configuration with setup key and database credentials
+/webapp/lib/config.php
+
+# Databases (real user data)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+/webapp/data/*
+!/webapp/data/.htaccess
+
+# Local test environment: portable PHP and local database
+/lokal/php/
+/lokal/data/*
+!/lokal/data/.gitkeep
+
+# Upload packages, exports, Python cache, IDE files
+*.zip
+/update-*/
+*.json
+__pycache__/
+.idea/
+*.iml
+.claude/
+
+# Local Claude Code notes
+CLAUDE.local.md

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anmelden · Homeoffice-Rechner</title>
+  <link rel="stylesheet" href="assets/app.css" id="css-modern">
+  <link rel="stylesheet" href="assets/klassisch.css" id="css-klassisch">
+  <link rel="stylesheet" href="assets/warm.css" id="css-warm">
+  <script src="assets/design.js"></script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Homeoffice">
+</head>
+<body>
+  <main class="narrow">
+    <h1>Homeoffice-Rechner</h1>
+
+    <form id="login-form" class="stack" novalidate>
+      <h2>Anmelden</h2>
+      <label class="field">E-Mail-Adresse <input id="email" type="email" autocomplete="username" required></label>
+      <label class="field">Passwort <input id="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit" class="primary">Anmelden</button>
+      <p class="hint">Passwort vergessen? Ein Admin erstellt dir einen neuen Link.</p>
+    </form>
+
+    <form id="redeem-form" class="stack" novalidate hidden>
+      <h2 id="redeem-title"></h2>
+      <p id="redeem-email" class="hint"></p>
+      <label class="field">Passwort (mindestens 10 Zeichen)
+        <input id="new-password" type="password" autocomplete="new-password" required></label>
+      <label class="field">Passwort wiederholen
+        <input id="new-password2" type="password" autocomplete="new-password" required></label>
+      <button type="submit" class="primary" id="redeem-submit"></button>
+    </form>
+
+    <p id="error" class="form-error" role="alert"></p>
+  </main>
+  <script src="assets/login.js"></script>
+</body>
+</html>
