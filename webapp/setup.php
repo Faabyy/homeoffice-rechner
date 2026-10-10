@@ -81,7 +81,7 @@ if ($validKey && $dbOk && $userCount === 0 && ($_SERVER['REQUEST_METHOD'] ?? '')
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Einrichtung · Homeoffice-Rechner</title>
-  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/app.css?v=<?= filemtime(__DIR__ . '/assets/app.css') ?>">
 </head>
 <body>
   <main class="narrow">
