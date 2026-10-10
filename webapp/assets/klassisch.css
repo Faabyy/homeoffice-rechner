@@ -208,8 +208,9 @@ a { color: var(--accent); }
   padding: 20px;
 }
 @media (max-width: 560px) {
-  /* four tabs share the width instead of running off the screen */
-  .tabs button { flex: 1 1 auto; min-width: 0; padding: 6px 4px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* four tabs share the width with full words; a still narrower phone scrolls them sideways */
+  .tabs { overflow-x: auto; scrollbar-width: none; }
+  .tabs button { flex: 1 0 auto; padding: 6px 4px; font-size: 13px; white-space: nowrap; }
   .tabs button[aria-selected="true"] { padding-top: 4px; }
   .panel { padding: 12px; }
   .topbar h1 { font-size: 19px; }

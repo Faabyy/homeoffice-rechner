@@ -495,7 +495,9 @@ a { color: var(--accent); }
 @media (max-width: 560px) {
   .panel { padding: 14px; }
   .tabs { display: flex; }
-  .tabs button { flex: 1 1 auto; min-width: 0; padding: 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* full words: tighter padding, and scrolling sideways if a phone is narrower still */
+  .tabs { overflow-x: auto; scrollbar-width: none; }
+  .tabs button { flex: 1 0 auto; padding: 0 4px; font-size: 13px; white-space: nowrap; }
 }
 .summary { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-top: 62px; }
 @media (max-width: 900px) { .summary { margin-top: 0; } }

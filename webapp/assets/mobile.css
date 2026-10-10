@@ -1,0 +1,119 @@
+/*
+ * Phones and touch screens, for all three designs: loaded after app.css, klassisch.css and
+ * warm.css and never disabled by design.js. Only layout and touch sizes live here, colours come
+ * from the design's variables (--bg, --line, --text, --muted, --highlight). Design-specific
+ * phone rules (e.g. the tabs) stay in the design's own stylesheet.
+ */
+
+/* The page reaches under the system bars of the installed app (viewport-fit=cover), so keep
+   content out of notches and the gesture bar. All insets are 0 in a normal browser tab. */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.topbar { padding-top: max(12px, env(safe-area-inset-top)); }
+
+/* calendar cells and entry badges: a shorter label on narrow screens (see SHORT_LABELS in app.js) */
+.short { display: none; }
+
+/* the legend explains clicks or touches, whichever this device uses */
+.hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .hint-pointer { display: none; }
+  .hint-touch { display: inline; }
+  /* long press opens the day menu: no text selection or iOS callout on the cells */
+  .day { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+}
+
+/* ---- touch: bigger targets, and 16px text so iOS doesn't zoom into focused fields ---- */
+
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), select, .field input, .field select { font-size: 16px; }
+  input:not([type="checkbox"]):not([type="radio"]), select,
+  .form-row button, .form-actions button, .toolbar button { height: 40px; }
+  .segmented label { padding: 8px 14px; font-size: 16px; }
+  .month-nav button { min-width: 40px; min-height: 40px; }
+  .account button.link { padding: 8px 6px; }
+  .entries td.actions button.link { padding: 8px 6px; }
+}
+
+/* ---- phones ---- */
+
+@media (max-width: 560px) {
+  /* header: title and account links in one row, the month below across the full width */
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 8px;
+    padding-bottom: 8px;
+  }
+  .topbar h1 { grid-column: 1; grid-row: 1; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .account { grid-column: 2; grid-row: 1; gap: 0; }
+  .account button.link { padding-inline: 4px; }
+  .account:has(.owner-box:not([hidden])) { grid-column: 1 / -1; grid-row: 3; flex-wrap: wrap; }
+  #user-email { display: none; } /* no room next to the title */
+  .month-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; }
+  .month-nav h2 { flex: 1; min-width: 0; }
+
+  .long:not(:only-child) { display: none; }
+  .short { display: inline; }
+
+  /* calendar: long holiday names wrap at word boundaries (or soft hyphens) instead of mid-word */
+  .day .txt {
+    overflow-wrap: normal;
+    hyphens: auto;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+
+  /* day menu as a sheet at the bottom of the screen, within thumb reach */
+  .context-menu {
+    left: 8px !important;
+    right: 8px;
+    top: auto !important;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    min-width: 0;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, .25);
+  }
+  .context-menu button { padding: 12px 14px; font-size: 16px; }
+
+  /* time entries as two-line rows instead of a wide table:
+     "Do 01.10.  [Büro]      Bearbeiten Löschen" / "07:45 – 16:15 · Pause 30 min      8:00 h"
+     (cells keep their order in the markup; `order` and a full-width ::after split the lines) */
+  .entry-list thead { display: none; }
+  .entry-list tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 6px;
+    padding: 6px 4px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .entry-list tbody tr::after { content: ""; flex-basis: 100%; order: 2; }
+  .entry-list tbody tr td { border: none; padding: 0; background: none; white-space: nowrap; order: 3; }
+  .entry-list tbody tr.highlight { background: var(--highlight); }
+  .entry-list tbody tr.editing { background: var(--ho); }
+  .entry-list td:nth-child(1) { order: 1; font-weight: 600; }
+  .entry-list td:nth-child(3)::before { content: "– "; }
+  .entry-list td:nth-child(4) { color: var(--muted); }
+  .entry-list td:nth-child(4)::before { content: "· Pause "; }
+  .entry-list td:nth-child(5) { margin-left: auto; font-weight: 600; }
+  .entry-list td:nth-child(5)::after { content: " h"; }
+  .entry-list td:nth-child(6) { order: 1; }
+  .entry-list td:nth-child(7) { order: 1; margin-left: auto; }
+
+  .entries th, .entries td { padding-inline: 4px; }
+
+  /* settings: the weekday dropdowns use the full width */
+  .weekday-selects { width: 100%; }
+  .weekday-select select { flex: 1; width: auto; min-width: 0; }
+}
+
+/* below the content, the summary only helps on the planning and time tabs */
+@media (max-width: 900px) {
+  body[data-tab="einstellungen"] .summary, body[data-tab="benutzer"] .summary { display: none; }
+}

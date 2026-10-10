@@ -9,8 +9,28 @@ const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "A
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const LABELS = { homeoffice: "Homeoffice", buero: "Büro", frei: "Frei", schule: "Berufsschule/Studium",
   krank: "Krank", urlaub: "Urlaub", null: "Nicht geplant" };
-// shorter text inside the calendar cells
+// shorter text inside the calendar cells, and on phones even shorter (mobile.css shows `.short`)
 const CELL_LABELS = { ...LABELS, schule: "Schule/Studium" };
+const SHORT_LABELS = { ...CELL_LABELS, homeoffice: "HO", schule: "Schule" };
+// Holiday names for phone-sized cells: abbreviated, and with soft hyphens (\u00AD) where a word may break
+const SHORT_HOLIDAYS = {
+  "Tag der Deutschen Einheit": "Dt. Einheit",
+  "Heilige Drei Könige": "Hl. Drei Könige",
+  "Christi Himmelfahrt": "Himmel\u00ADfahrt",
+  "Mariä Himmelfahrt": "Mariä Himmel\u00ADfahrt",
+  "1. Weihnachtstag": "1. Weih\u00ADnachten",
+  "2. Weihnachtstag": "2. Weih\u00ADnachten",
+  "Reformationstag": "Refor\u00ADmations\u00ADtag",
+  "Ostermontag": "Oster\u00ADmontag",
+  "Ostersonntag": "Oster\u00ADsonntag",
+  "Pfingstmontag": "Pfingst\u00ADmontag",
+  "Pfingstsonntag": "Pfingst\u00ADsonntag",
+  "Karfreitag": "Kar\u00ADfreitag",
+  "Fronleichnam": "Fron\u00ADleichnam",
+  "Allerheiligen": "Aller\u00ADheiligen",
+  "Weltkindertag": "Welt\u00ADkinder\u00ADtag",
+  "Frauentag": "Frauen\u00ADtag",
+};
 // day-off kinds offered in the menu besides "Frei" (they all count like a day off)
 const OFF_OPTIONS = [["frei", "Frei"], ["schule", LABELS.schule], ["krank", "Krank"], ["urlaub", "Urlaub"]];
 const PLAN_CYCLE = [null, "homeoffice", "buero", "frei"];
@@ -207,21 +227,26 @@ function nextPlanStatus(day) {
 
 function dayContent(day) {
   let text = "";
+  let short = "";
   let color = "c-offen";
-  if (day.kind === Logic.HOLIDAY) { text = day.holiday; color = "c-feiertag"; }
-  else if (day.kind === Logic.DAY_OFF) { text = CELL_LABELS[day.offType]; color = `c-${day.offType}`; }
-  else if (day.kind === Logic.NON_WORKDAY) { color = "c-kein"; }
-  else if (day.planned) { text = LABELS[day.planned]; color = `c-${day.planned}`; }
+  if (day.kind === Logic.HOLIDAY) { text = day.holiday; short = SHORT_HOLIDAYS[text] || text; color = "c-feiertag"; }
+  else if (day.kind === Logic.DAY_OFF) {
+    text = CELL_LABELS[day.offType];
+    short = SHORT_LABELS[day.offType];
+    color = `c-${day.offType}`;
+  } else if (day.kind === Logic.NON_WORKDAY) { color = "c-kein"; }
+  else if (day.planned) { text = LABELS[day.planned]; short = SHORT_LABELS[day.planned]; color = `c-${day.planned}`; }
 
   const logged = Object.entries(day.actual);
   if (logged.length) {
     text = "✓ " + logged
       .map(([loc, minutes]) => `${loc === Logic.HOME_OFFICE ? "HO" : "Büro"} ${fmtMinutes(minutes)}`)
       .join(" + ");
+    short = logged.map(([loc, minutes]) => `${SHORT_LABELS[loc]} ${fmtMinutes(minutes)}`).join(" + ");
     const [main] = logged.reduce((a, b) => (b[1] > a[1] ? b : a));
     color = `c-${main}`;
   }
-  return { text, color };
+  return { text, short, color };
 }
 
 function renderCalendar() {
@@ -231,7 +256,7 @@ function renderCalendar() {
 
   const today = Logic.today();
   for (const day of state.days) {
-    const { text, color } = dayContent(day);
+    const { text, short, color } = dayContent(day);
     const classes = ["day", color];
     if (!isPlannable(day)) classes.push("static");
     if (day.date === today) classes.push("today");
@@ -255,7 +280,8 @@ function renderCalendar() {
         showDayMenu(day, x, y);
       },
     }, el("span", { class: "num" }, el("span", {}, String(Number(day.date.slice(8))))),
-       el("span", { class: "txt" }, text),
+       el("span", { class: "txt" }, el("span", { class: "long" }, text),
+         short !== text ? el("span", { class: "short", "aria-hidden": "true" }, short) : null),
        day.schoolStart ? el("span", { class: "sch" }, day.school) : null));
   }
   $("calendar").replaceChildren(...cells);
@@ -319,6 +345,55 @@ function showDayMenu(day, x, y) {
 
 function hideMenu() {
   $("context-menu").hidden = true;
+}
+
+// Touch screens: holding a day opens its menu. iOS Safari fires no contextmenu event for a long
+// touch, so the timer dispatches one; Android fires its own, and whichever comes first wins.
+// The click when the finger is lifted must not also change the plan.
+const LONG_PRESS_MS = 500;
+
+function setupLongPress() {
+  const calendar = $("calendar");
+  let timer = null;
+  let start = null;
+  let openedAt = 0;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  const recent = () => Date.now() - openedAt < 1000;
+
+  calendar.addEventListener("touchstart", (event) => {
+    cancel();
+    const day = event.target.closest(".day");
+    if (state.readOnly || !day || event.touches.length !== 1) return;
+    start = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    timer = setTimeout(() => {
+      timer = null;
+      openedAt = Date.now();
+      if (navigator.vibrate) navigator.vibrate(10);
+      day.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: start.x, clientY: start.y }));
+    }, LONG_PRESS_MS);
+  }, { passive: true });
+  calendar.addEventListener("touchmove", (event) => {
+    const touch = event.touches[0];
+    if (timer && Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 10) cancel();
+  }, { passive: true });
+  calendar.addEventListener("touchend", cancel);
+  calendar.addEventListener("touchcancel", cancel);
+  calendar.addEventListener("contextmenu", (event) => {
+    if (!event.isTrusted) return; // ours
+    if (recent()) { // the browser's own, after ours already opened the menu
+      event.preventDefault();
+      event.stopPropagation();
+    } else if (timer) { // the browser's own came first
+      cancel();
+      openedAt = Date.now();
+    }
+  }, true);
+  calendar.addEventListener("click", (event) => {
+    if (recent()) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
 }
 
 function setupMenu() {
@@ -535,7 +610,9 @@ function renderTable() {
       el("td", {}, entry.end),
       el("td", {}, `${entry.break} min`),
       el("td", {}, fmtMinutes(Logic.workedMinutes(entry))),
-      el("td", {}, el("span", { class: `badge c-${entry.location}` }, LABELS[entry.location])),
+      el("td", {}, el("span", { class: `badge c-${entry.location}` }, el("span", { class: "long" }, LABELS[entry.location]),
+        SHORT_LABELS[entry.location] !== LABELS[entry.location]
+          ? el("span", { class: "short" }, SHORT_LABELS[entry.location]) : null)),
       el("td", { class: "actions" }, ...(state.readOnly ? [] : [
         el("button", { type: "button", class: "link", onclick: () => startEdit(entry) }, "Bearbeiten"),
         el("button", { type: "button", class: "link", onclick: () => deleteEntry(entry) }, "Löschen")])),
@@ -1178,6 +1255,7 @@ function switchTab(name) {
     button.setAttribute("aria-selected", String(button.dataset.tab === name));
   }
   for (const tab of TABS) $(`tab-${tab}`).hidden = tab !== name;
+  document.body.dataset.tab = name; // mobile.css hides the summary on some tabs
   history.replaceState(null, "", `#${name}`);
   hideMenu();
   if (name === "benutzer") loadAdmin();
@@ -1205,6 +1283,7 @@ async function init() {
   $("import-file").addEventListener("change", importData);
   setupAdmin();
   setupMenu();
+  setupLongPress();
   setupEntryForm();
   setupNews();
   setupDesign();

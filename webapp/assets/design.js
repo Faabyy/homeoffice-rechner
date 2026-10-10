@@ -5,6 +5,8 @@
 // disables the ones not chosen. It also applies the colour scheme: automatic (system setting),
 // or light/dark chosen explicitly via <html data-scheme>, which the stylesheets honour. Both
 // choices are per browser (localStorage) and changed in Einstellungen → Darstellung.
+// Finally it gives <meta name="theme-color"> (the Android status bar of the installed app) the
+// colour at the top of the page, so the bar blends in with every design and colour scheme.
 
 const Design = (() => {
   const KEY = "design";
@@ -35,6 +37,23 @@ const Design = (() => {
   function applyScheme(name) {
     if (name === "auto") delete document.documentElement.dataset.scheme;
     else document.documentElement.dataset.scheme = name;
+    updateThemeColor();
+  }
+
+  /** Background at the very top of the page: the header bar (Klassisch) or the page itself. */
+  function updateThemeColor() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta || !document.body) return;
+    const transparent = (color) => color === "transparent" || /^rgba\(.*,\s*0\)$/.test(color);
+    const first = document.body.firstElementChild;
+    const atTop = first && first.getBoundingClientRect().top + window.scrollY <= 0;
+    for (const box of [atTop ? first : null, document.body, document.documentElement]) {
+      const color = box ? getComputedStyle(box).backgroundColor : "transparent";
+      if (!transparent(color)) {
+        meta.content = color;
+        return;
+      }
+    }
   }
 
   function chooseScheme(name) {
@@ -53,6 +72,7 @@ const Design = (() => {
       if (link) link.disabled = id !== name;
     }
     document.documentElement.dataset.design = name;
+    updateThemeColor();
   }
 
   function choose(name) {
@@ -78,5 +98,12 @@ const Design = (() => {
 
   apply(current());
   applyScheme(scheme());
+  // the body exists only after parsing; "auto" follows the system scheme when it changes
+  document.addEventListener("DOMContentLoaded", updateThemeColor);
+  window.addEventListener("load", updateThemeColor);
+  if (window.matchMedia) {
+    const dark = window.matchMedia("(prefers-color-scheme: dark)");
+    if (dark.addEventListener) dark.addEventListener("change", updateThemeColor);
+  }
   return { DESIGNS, current, choose, SCHEMES, scheme, chooseScheme };
 })();
