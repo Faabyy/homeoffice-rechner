@@ -159,12 +159,18 @@ async function ensureSchoolHolidays() {
     state.school[key] = "failed"; // display only: the calendar simply shows no school holidays
     return;
   }
-  if (state.data.settings.state === region && state.year === year) render();
+  if (state.data.settings.state === region && state.year === year) draw();
 }
 
+/** Show the current month; also fetches its school holidays if they are not known yet. */
 function render() {
-  $("month-label").textContent = `${MONTHS[state.month - 1]} ${state.year}`;
   ensureSchoolHolidays();
+  draw();
+}
+
+/** Redraw from the data at hand (does not start any loading, so the loader can call it). */
+function draw() {
+  $("month-label").textContent = `${MONTHS[state.month - 1]} ${state.year}`;
   state.days = Logic.monthDays(state.year, state.month, state.data, schoolPeriods());
   renderCalendar();
   renderTable();
@@ -251,6 +257,31 @@ function dayContent(day) {
   return { text, short, color };
 }
 
+/** Clicks and context menus are handled once on the calendar, not by a closure per day cell. */
+function setupCalendarEvents() {
+  const calendar = $("calendar");
+  const dayOf = (event) => {
+    const cell = event.target.closest("button.day");
+    return cell && { cell, day: state.days.find((d) => d.date === cell.dataset.date) };
+  };
+  calendar.addEventListener("click", (event) => {
+    const hit = dayOf(event);
+    if (hit && hit.day) cyclePlan(hit.day.date);
+  });
+  calendar.addEventListener("contextmenu", (event) => {
+    const hit = dayOf(event);
+    if (state.readOnly || !hit || !hit.day) return;
+    event.preventDefault();
+    let { clientX: x, clientY: y } = event;
+    if (x === 0 && y === 0) { // opened via keyboard (context menu key / Shift+F10)
+      const rect = hit.cell.getBoundingClientRect();
+      x = rect.left + 8;
+      y = rect.bottom;
+    }
+    showDayMenu(hit.day, x, y);
+  });
+}
+
 function renderCalendar() {
   const cells = WEEKDAYS.map((name) => el("div", { class: "weekday" }, name));
   const offset = Logic.weekday(state.days[0].date);
@@ -270,17 +301,7 @@ function renderCalendar() {
       class: classes.join(" "),
       title: [day.school && `${day.school} (Schulferien)`, hint].filter(Boolean).join("\n"),
       "aria-label": `${dayLabel(day.date)} ${text}${day.school ? `, ${day.school}` : ""}`.trim(),
-      onclick: () => cyclePlan(day.date),
-      oncontextmenu: state.readOnly ? undefined : (event) => {
-        event.preventDefault();
-        let { clientX: x, clientY: y } = event;
-        if (x === 0 && y === 0) { // opened via keyboard (context menu key / Shift+F10)
-          const rect = event.currentTarget.getBoundingClientRect();
-          x = rect.left + 8;
-          y = rect.bottom;
-        }
-        showDayMenu(day, x, y);
-      },
+      "data-date": day.date,
     }, el("span", { class: "num" }, el("span", {}, String(Number(day.date.slice(8))))),
        el("span", { class: "txt" }, el("span", { class: "long" }, text),
          short !== text ? el("span", { class: "short", "aria-hidden": "true" }, short) : null),
@@ -903,258 +924,23 @@ async function deleteFlex(item) {
   render();
 }
 
-// ---- administration -----------------------------------------------------------------
+// ---- administration (assets/admin.js, loaded when an admin first opens the Benutzer tab) ----
 
-const ROLE_LABELS = { user: "Nutzer", admin: "Admin", viewer: "Nur Lesen" };
-// actions in the admin log (admin_log.action, written by lib/admin.php)
-const ADMIN_ACTIONS = { invite: "Eingeladen", reset: "Passwort-Link erstellt", revoke: "Link zurückgezogen",
-  role: "Rolle geändert", email: "E-Mail geändert", lock: "Gesperrt", unlock: "Entsperrt",
-  logout: "Überall abgemeldet", access: "Freigaben geändert", export: "Daten exportiert", delete: "Konto gelöscht" };
+let adminScript = null;
+// until admin.js has attached its handler, the form must not fall back to a native submit
+$("invite-form").addEventListener("submit", (event) => event.preventDefault());
 
-const admin = {
-  overview: null, // last admin-overview response
-  detailId: null, // account shown in the detail dialog
-};
-
-const accountById = (id) => admin.overview.users.find((u) => u.id === id) || null;
-const germanDateTime = (text) => `${Logic.germanDate(text.slice(0, 10))} ${text.slice(11)}`;
-
-async function loadAdmin() {
-  try {
-    admin.overview = await api("admin-overview");
-  } catch (error) {
-    $("invite-error").textContent = error.message;
-    return false;
+function openAdminTab() {
+  if (!adminScript) {
+    adminScript = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = document.querySelector('meta[name="admin-script"]').content;
+      script.onload = resolve;
+      script.onerror = () => { adminScript = null; reject(new Error("Der Verwaltungsbereich konnte nicht geladen werden.")); };
+      document.head.append(script);
+    });
   }
-  const self = accountById(state.user.id);
-  if (self && self.email !== state.user.email) { // the admin changed the own e-mail
-    state.user.email = self.email;
-    $("user-email").textContent = self.email;
-  }
-  // the admin's own account may just have been assigned or removed
-  state.data.viewers = admin.overview.users.filter((u) => u.isViewer && u.canView.includes(state.user.id)).map((u) => u.email);
-  renderViewers();
-  renderUsers();
-  renderLinks();
-  renderLog();
-  renderBackup();
-  if ($("account-dialog").open) {
-    if (accountById(admin.detailId)) renderAccount();
-    else $("account-dialog").close();
-  }
-  return true;
-}
-
-function accessSummary(u) {
-  if (u.isViewer) return u.canView.length ? `sieht ${plural(u.canView.length, "Konto", "Konten")}` : "sieht nichts";
-  return u.viewedBy.length ? `lesbar für ${u.viewedBy.length}` : "–";
-}
-
-function renderUsers() {
-  const search = $("u-search").value.trim().toLowerCase();
-  const filter = $("u-filter").value;
-  const users = admin.overview.users.filter((u) => u.email.includes(search)
-    && (!filter || (filter === "locked" ? u.lockedAt !== null : u.role === filter)));
-  $("users-body").replaceChildren(...users.map((u) => el("tr", { class: "clickable", onclick: () => openAccount(u.id) },
-    el("td", {}, u.email, u.id === state.user.id ? el("span", { class: "muted" }, " (du)") : null),
-    el("td", {}, ROLE_LABELS[u.role]),
-    el("td", {}, u.lockedAt ? el("span", { class: "badge locked" }, "Gesperrt") : "Aktiv"),
-    el("td", {}, accessSummary(u)),
-    el("td", {}, Logic.germanDate(u.createdAt)),
-    el("td", { class: "actions" }, el("button", { type: "button", class: "link" }, "Details")),
-  )));
-  $("no-users").hidden = users.length > 0;
-  const total = admin.overview.users.length;
-  $("u-count").textContent = users.length === total ? plural(total, "Konto", "Konten") : `${users.length} von ${total}`;
-}
-
-function renderLinks() {
-  const links = admin.overview.links;
-  $("links-body").replaceChildren(...links.map((l) => el("tr", {},
-    el("td", {}, l.email),
-    el("td", {}, l.kind !== "invite" ? "Passwort-Link"
-      : l.isAdmin ? "Einladung (Admin)" : l.isViewer ? "Einladung (Nur Lesen)" : "Einladung"),
-    el("td", {}, germanDateTime(l.expiresAt)),
-    el("td", { class: "actions" },
-      el("button", { type: "button", class: "link", onclick: () => revokeLink(l) }, "Zurückziehen")),
-  )));
-  $("no-links").hidden = links.length > 0;
-}
-
-function logRow(entry, withTarget = true) {
-  return el("tr", {},
-    el("td", {}, germanDateTime(entry.at)),
-    el("td", {}, entry.admin),
-    el("td", {}, ADMIN_ACTIONS[entry.action] || entry.action),
-    withTarget ? el("td", {}, entry.target || "") : null,
-    el("td", { class: "note" }, entry.details));
-}
-
-function renderLog() {
-  $("log-body").replaceChildren(...admin.overview.log.map((entry) => logRow(entry)));
-  $("no-log").hidden = admin.overview.log.length > 0;
-}
-
-function renderBackup() {
-  const b = admin.overview.backup;
-  if (!b.enabled) {
-    $("backup-info").textContent = "Automatische Sicherung ist aus (abgeschaltet oder MySQL – dann sichert der Hoster).";
-  } else {
-    const last = b.last ? `${Logic.germanDate(b.last.slice(0, 10))} ${b.last.slice(11)} Uhr` : "noch keine";
-    $("backup-info").textContent = `Letzte Sicherung: ${last} · alle ${b.days} Tage, die letzten ${b.keep} bleiben `
-      + `(${plural(b.count, "Kopie", "Kopien")} in data/backups/).`;
-  }
-}
-
-// ---- account detail ------------------------------------------------------------------
-
-function openAccount(id) {
-  admin.detailId = id;
-  renderAccount();
-  $("account-dialog").showModal();
-  $("account-title").focus(); // not the e-mail field, which showModal would focus
-}
-
-function setDetailStatus(message, isError = false) {
-  const status = $("detail-status");
-  status.textContent = message;
-  status.classList.toggle("error", isError);
-}
-
-/** Run an admin action from the detail dialog, reload everything and report the outcome. */
-async function accountAction(run, success) {
-  let result;
-  try {
-    result = await run();
-  } catch (error) {
-    setDetailStatus(error.message, true);
-    return undefined;
-  }
-  await loadAdmin();
-  if ($("account-dialog").open) setDetailStatus(typeof success === "function" ? success(result) : success);
-  return result;
-}
-
-function detailSection(title, ...children) {
-  return el("section", { class: "detail-section" }, el("h4", {}, title), ...children);
-}
-
-/** Checkboxes for read access: viewer -> accounts it sees; other account -> viewers that see it. */
-function accessSection(u) {
-  const candidates = admin.overview.users.filter((o) => o.isViewer !== u.isViewer);
-  const selected = u.isViewer ? u.canView : u.viewedBy;
-  if (!candidates.length) {
-    return detailSection("Freigaben", el("p", { class: "hint" }, u.isViewer
-      ? "Noch keine Konten mit eigenen Daten." : "Noch keine Lese-Konten."));
-  }
-  const boxes = candidates.map((o) => el("input", { type: "checkbox", value: String(o.id), checked: selected.includes(o.id) }));
-  const ids = () => boxes.filter((b) => b.checked).map((b) => Number(b.value));
-  const save = () => accountAction(() => (u.isViewer
-    ? api("admin-viewer-access", { id: u.id, canView: ids() })
-    : api("admin-owner-access", { id: u.id, viewers: ids() })), "Freigaben gespeichert ✓");
-  return detailSection("Freigaben",
-    el("p", { class: "hint" }, u.isViewer ? "Darf diese Konten sehen:" : "Sichtbar für diese Lese-Konten:"),
-    el("div", { class: "access" }, ...candidates.map((o, i) => el("label", { class: "checkbox" }, boxes[i], o.email))),
-    el("div", { class: "form-actions" }, el("button", { type: "button", onclick: save }, "Freigaben speichern")));
-}
-
-function renderAccount() {
-  const u = accountById(admin.detailId);
-  const self = u.id === state.user.id;
-  const email = el("input", { type: "email", class: "w-email", value: u.email, "aria-label": "E-Mail-Adresse" });
-  const role = el("select", { "aria-label": "Rolle", disabled: self },
-    ...Object.entries(ROLE_LABELS).map(([value, label]) => el("option", { value, selected: value === u.role }, label)));
-  const status = u.lockedAt ? `Gesperrt seit ${germanDateTime(u.lockedAt)}` : "Aktiv";
-  const log = admin.overview.log.filter((entry) => entry.targetId === u.id).slice(0, 10);
-
-  const button = (label, onclick, props = {}) => el("button", { type: "button", onclick, ...props }, label);
-  $("account-detail").replaceChildren(
-    el("h3", { id: "account-title", tabIndex: -1 }, u.email, self ? el("span", { class: "muted" }, " (du)") : null),
-    el("p", { class: "hint" }, `${ROLE_LABELS[u.role]} · seit ${Logic.germanDate(u.createdAt)} · ${status}`),
-
-    detailSection("Konto",
-      el("div", { class: "form-actions" }, email, button("E-Mail ändern", () => accountAction(
-        () => api("admin-email", { id: u.id, email: email.value }), "E-Mail geändert ✓"))),
-      el("div", { class: "form-actions" }, role, button("Rolle ändern", () => accountAction(
-        () => api("admin-role", { id: u.id, role: role.value }), "Rolle geändert ✓"),
-        { disabled: self, title: self ? "Deine eigene Rolle kann nur ein anderer Admin ändern." : undefined }))),
-
-    detailSection("Zugang",
-      el("p", { class: "hint" }, `${status} · ${plural(u.sessions, "aktive Sitzung", "aktive Sitzungen")}`),
-      el("div", { class: "form-actions wrap" },
-        button("Passwort-Link erstellen", async () => {
-          const result = await accountAction(() => api("admin-reset", { email: u.email }), "Passwort-Link erstellt ✓");
-          if (result) showLinkIn($("detail-link"), `Passwort-Link für ${u.email}. Er ist 24 Stunden gültig und funktioniert einmal.`, result.link);
-        }, { disabled: Boolean(u.lockedAt) }),
-        self ? null : button(u.lockedAt ? "Entsperren" : "Sperren", () => {
-          if (!u.lockedAt && !window.confirm(`${u.email} sperren? Die Person wird sofort abgemeldet und kann sich nicht mehr anmelden; die Daten bleiben erhalten.`)) return;
-          accountAction(() => api("admin-lock", { id: u.id, locked: !u.lockedAt }), u.lockedAt ? "Entsperrt ✓" : "Gesperrt ✓");
-        }),
-        self ? null : button("Überall abmelden", () => accountAction(() => api("admin-logout", { id: u.id }),
-          (r) => `${plural(r.count, "Sitzung", "Sitzungen")} beendet ✓`), { disabled: u.sessions === 0 })),
-      el("div", { id: "detail-link", class: "link-box", hidden: true })),
-
-    accessSection(u),
-
-    u.isViewer ? null : detailSection("Daten",
-      el("div", { class: "form-actions" }, button("Daten exportieren", () => accountAction(async () => {
-        const data = await api(`admin-export&id=${u.id}`);
-        downloadExport(data, `homeoffice-rechner-${data.email}-${Logic.today()}.json`);
-      }, "Export heruntergeladen ✓")))),
-
-    detailSection("Protokoll", log.length
-      ? el("div", { class: "table-card" }, el("table", { class: "entries" }, el("tbody", {}, ...log.map((entry) => logRow(entry, false)))))
-      : el("p", { class: "hint" }, "Noch keine Admin-Aktionen zu diesem Konto.")),
-
-    el("div", { class: "form-actions detail-footer" },
-      self ? null : button("Konto löschen", async () => {
-        if (!window.confirm(`Konto ${u.email} mit allen Daten endgültig löschen?`)) return;
-        await accountAction(() => api("admin-delete-user", { id: u.id }), "");
-      }, { class: "danger" }),
-      el("span", { id: "detail-status", class: "status", role: "status" }),
-      button("Schließen", () => $("account-dialog").close(), { class: "primary" })),
-  );
-}
-
-// ---- invitations & links ---------------------------------------------------------------
-
-function showLinkIn(box, text, url) {
-  const input = el("input", { readonly: true, class: "w-link", value: url });
-  const copy = el("button", { type: "button", onclick: () => copyLink(input, copy) }, "Kopieren");
-  box.replaceChildren(el("p", {}, text), el("div", { class: "form-actions" }, input, copy));
-  box.hidden = false;
-  input.select();
-}
-
-async function invite(event) {
-  event.preventDefault();
-  $("invite-error").textContent = "";
-  const email = $("i-email").value.trim();
-  try {
-    const role = $("i-role").value;
-    const { link } = await api("admin-invite", { email, isAdmin: role === "admin", isViewer: role === "viewer" });
-    showLinkIn($("link-box"), `Schicke diesen Link an ${email}. Er ist 7 Tage gültig und funktioniert einmal.`, link);
-    $("invite-form").reset();
-  } catch (error) {
-    $("invite-error").textContent = error.message;
-  }
-  loadAdmin();
-}
-
-async function revokeLink(link) {
-  await api("admin-revoke", { id: link.id }).catch((error) => { $("invite-error").textContent = error.message; });
-  loadAdmin();
-}
-
-async function copyLink(input, button) {
-  try {
-    await navigator.clipboard.writeText(input.value);
-    button.textContent = "Kopiert ✓";
-  } catch {
-    input.select();
-    button.textContent = "Mit Strg+C kopieren";
-  }
-  setTimeout(() => { button.textContent = "Kopieren"; }, 2500);
+  adminScript.then(() => loadAdmin()).catch((error) => { $("invite-error").textContent = error.message; });
 }
 
 // ---- design --------------------------------------------------------------------------
@@ -1168,12 +954,6 @@ function setupDesign() {
   };
   pick("s-design", Design.DESIGNS, Design.current(), Design.choose);
   pick("s-scheme", Design.SCHEMES, Design.scheme(), Design.chooseScheme);
-}
-
-function setupAdmin() {
-  $("invite-form").addEventListener("submit", invite);
-  $("u-search").addEventListener("input", () => admin.overview && renderUsers());
-  $("u-filter").addEventListener("change", () => admin.overview && renderUsers());
 }
 
 // ---- help & news ------------------------------------------------------------------------
@@ -1266,7 +1046,7 @@ function switchTab(name) {
   document.body.dataset.tab = name; // mobile.css hides the summary on some tabs
   history.replaceState(null, "", `#${name}`);
   hideMenu();
-  if (name === "benutzer") loadAdmin();
+  if (name === "benutzer") openAdminTab();
 }
 
 async function init() {
@@ -1289,8 +1069,8 @@ async function init() {
   $("flex-form").addEventListener("submit", addFlex);
   $("export-btn").addEventListener("click", exportData);
   $("import-file").addEventListener("change", importData);
-  setupAdmin();
   setupMenu();
+  setupCalendarEvents();
   setupLongPress();
   setupEntryForm();
   setupNews();

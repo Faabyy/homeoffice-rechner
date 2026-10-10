@@ -153,8 +153,9 @@ class UiTest(unittest.TestCase):
         self.assertIn("-4:00", self.js("document.querySelector('.summary .flex .caption').textContent"))
 
         # invite someone, log out, use the link
-        self.js("document.querySelector('[data-tab=benutzer]').click();"
-                "document.getElementById('i-email').value = 'kollegin@example.org';"
+        self.js("document.querySelector('[data-tab=benutzer]').click()")
+        b.wait_for("typeof loadAdmin === 'function'")
+        self.js("document.getElementById('i-email').value = 'kollegin@example.org';"
                 "document.getElementById('invite-form').requestSubmit()")
         link = b.wait_for("!document.getElementById('link-box').hidden && document.querySelector('#link-box input').value")
         self.assertIn("login.php?token=", link)
@@ -354,8 +355,9 @@ class UiTest(unittest.TestCase):
 
         # the admin invites a read-only account and assigns the own account to it
         self.login("admin@example.org", "geheim12345")
-        self.js("document.querySelector('[data-tab=benutzer]').click();"
-                "document.getElementById('i-email').value = 'leser@example.org';"
+        self.js("document.querySelector('[data-tab=benutzer]').click()")
+        b.wait_for("typeof loadAdmin === 'function'")
+        self.js("document.getElementById('i-email').value = 'leser@example.org';"
                 "document.getElementById('i-role').value = 'viewer';"
                 "document.getElementById('invite-form').requestSubmit()")
         link = b.wait_for("!document.getElementById('link-box').hidden && document.querySelector('#link-box input').value")
