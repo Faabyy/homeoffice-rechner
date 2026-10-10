@@ -7,6 +7,25 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Performance und Aufräumen (Code-Review)
+
+Upload-Ordner: `update-performance/` (enthält auch die geänderte `.htaccess` – lässt sich diese nicht
+speichern oder gibt es danach einen 500-Fehler, den Block `Cache-Control` darin wieder entfernen)
+
+- Datenbank: Schema-Version in neuer Tabelle `schema_meta` (`SCHEMA_VERSION` in `lib/db.php`) statt
+  Prüfung der „neuesten Tabelle“; spätere neue Spalten werden so nicht mehr übersehen. Die vorhandene
+  Datenbank wird beim ersten Aufruf automatisch migriert (neue Tabelle + Indizes `sessions_expires`,
+  `sessions_user`, `login_failures_at`), Daten bleiben unberührt.
+- Automatische Sicherung wird nur noch beim App-Start (`GET me`) geprüft, nicht bei jeder Anfrage.
+- `.htaccess`: `.js`/`.css` ein Jahr cachen (die URLs tragen `?v=<Änderungszeit>`); `setup.php` versioniert
+  `app.css` jetzt ebenfalls.
+- `api.php`: JSON-Antworten per gzip, wenn der Browser es anfragt und PHP zlib hat.
+- Import (`import_data`): Mehrzeilen-`INSERT` in Blöcken (`db_insert_many`) statt eines Statements je Zeile.
+- `app.js`: Verwaltungsbereich nach `assets/admin.js` ausgelagert und erst beim ersten Öffnen des Tabs
+  „Benutzer“ geladen; Klick/Kontextmenü im Kalender einmal am Container statt je Tag; `render()`
+  (lädt Schulferien nach) von `draw()` (zeichnet nur) getrennt, sodass der Lader nicht mehr `render()`
+  erneut aufruft. Kein sichtbarer Unterschied für Nutzer, daher kein Eintrag in `changelog.js`.
+
 ## 2026-10-10 – Navigationsleiste beim Start nicht mehr weiß
 
 Upload-Ordner: `update-leistenfarbe/`
