@@ -7,6 +7,17 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Screenshots als Schaufenster, Fehler „null“ im Konto-Dialog
+
+Upload-Ordner: `update-konto-dialog/`
+
+- README: neun Screenshots (`docs/screenshots/`): alle drei Designs hell und dunkel, dabei Planung,
+  Zeiterfassung, Einstellungen, Benutzerverwaltung, Tagesmenü, Neuigkeiten und drei Handy-Ansichten.
+- `demo/seed.py`: legt `anna` (Nutzer) und `chefin` (Nur Lesen, sieht das Demo-Konto) wirklich an
+  (Einladung wird eingelöst), dazu eine offene Einladung `max`.
+- Fehler gefunden und behoben: Im Konto-Dialog eines Lese-Kontos stand zwischen den Abschnitten der Text „null“,
+  weil `replaceChildren(null)` ihn als Text einfügt (`assets/admin.js`). Test ergänzt.
+
 ## 2026-10-10 – Startbildschirm und untere Leiste der Android-App folgen dem Design
 
 Upload-Ordner: `update-manifest/` (`manifest.webmanifest` auf dem Server löschen)

@@ -6,6 +6,8 @@ jar = http.cookiejar.CookieJar()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 
 def post(path, data, form=False):
+    if data is None:  # GET
+        return json.loads(opener.open(BASE + path).read())
     body = (data if form else json.dumps(data)).encode()
     req = urllib.request.Request(BASE + path, body, {"Content-Type": "application/x-www-form-urlencoded" if form else "application/json"})
     try:
@@ -26,6 +28,19 @@ for day, status in [("2026-10-12", "buero"), ("2026-10-13", "urlaub"), ("2026-10
                     ("2026-10-19", "homeoffice"), ("2026-10-20", "krank"), ("2026-10-21", "homeoffice"), ("2026-10-27", "frei")]:
     post("api.php?action=plan", {"day": day, "status": status})
 post("api.php?action=flex", {"day": "2026-09-30", "minutes": -20, "note": "Übertrag September"})
+
+def redeem(link, password):
+    """Accept an invitation like the invited person would (own cookie jar, so our session stays)."""
+    token = link.split("token=")[1]
+    other = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    body = json.dumps({"token": token, "password": password}).encode()
+    other.open(urllib.request.Request(BASE + "api.php?action=redeem", body, {"Content-Type": "application/json"}))
+
+# two accounts (a colleague and a read-only boss who may see the demo account) and one open invitation
 for name, viewer in (("anna", False), ("chefin", True)):
-    post("api.php?action=admin-invite", {"username": name, "isViewer": viewer})
+    link = post("api.php?action=admin-invite", {"username": name, "isViewer": viewer})["link"]
+    redeem(link, f"{name}-passwort-123")
+post("api.php?action=admin-invite", {"username": "max", "isViewer": False})
+users = {u["username"]: u["id"] for u in post("api.php?action=admin-overview", None)["users"]}
+post("api.php?action=admin-viewer-access", {"id": users["chefin"], "canView": [users[USER]]})
 print("Demo-Daten angelegt.")

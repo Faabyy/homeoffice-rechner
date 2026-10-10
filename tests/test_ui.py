@@ -384,6 +384,8 @@ class UiTest(unittest.TestCase):
         b.wait_for("document.getElementById('users-body').textContent.includes('leser@example.org')")
         self.js("[...document.querySelectorAll('#users-body tr')].find(r => r.textContent.includes('leser@')).click()")
         self.assertTrue(self.js("document.getElementById('account-dialog').open"))
+        # a read-only account has no "Daten" section; nothing stray (e.g. the text "null") in its place
+        self.assertFalse(self.js("[...document.getElementById('account-detail').childNodes].some(n => n.nodeType === 3)"))
         self.js("document.querySelector('#account-detail .access input').click();"
                 "[...document.querySelectorAll('#account-detail button')].find(x => x.textContent === 'Freigaben speichern').click()")
         # saved and reloaded: the owner (here the admin) sees who can read the data

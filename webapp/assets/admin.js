@@ -170,7 +170,7 @@ function renderAccount() {
   const log = admin.overview.log.filter((entry) => entry.targetId === u.id).slice(0, 10);
 
   const button = (label, onclick, props = {}) => el("button", { type: "button", onclick, ...props }, label);
-  $("account-detail").replaceChildren(
+  $("account-detail").replaceChildren(...[ // null = section not shown (replaceChildren would print it as text)
     el("h3", { id: "account-title", tabIndex: -1 }, u.username, self ? el("span", { class: "muted" }, " (du)") : null),
     el("p", { class: "hint" }, `${ROLE_LABELS[u.role]} · seit ${Logic.germanDate(u.createdAt)} · ${status}`),
 
@@ -215,7 +215,7 @@ function renderAccount() {
       }, { class: "danger" }),
       el("span", { id: "detail-status", class: "status", role: "status" }),
       button("Schließen", () => $("account-dialog").close(), { class: "primary" })),
-  );
+  ].filter(Boolean));
 }
 
 // ---- invitations & links ---------------------------------------------------------------

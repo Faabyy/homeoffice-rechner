@@ -20,29 +20,21 @@ Prüfung gegen eine monatliche Homeoffice-Grenze (Standard: höchstens 30 % der 
 
 ## Screenshots
 
-Alle Bilder zeigen die Demo-Daten (`demo/`, siehe `demo/LIESMICH.md`).
+Drei Designs, jeweils hell und dunkel – und dabei die verschiedenen Bereiche der App (Demo-Daten aus `demo/`).
 
-**Planung** – Monatskalender mit Prognose und Gleitzeitkonto (Design „Modern“):
+| Hell | Dunkel |
+|---|---|
+| <img src="docs/screenshots/modern-hell-planung.png" alt="Modern, hell: Planung"><br>**Modern** · Planung: Monatskalender mit Prognose und Gleitzeitkonto | <img src="docs/screenshots/modern-dunkel-zeiterfassung.png" alt="Modern, dunkel: Zeiterfassung"><br>**Modern** · Zeiterfassung mit Liste der Einträge |
+| <img src="docs/screenshots/klassisch-hell-einstellungen.png" alt="Klassisch, hell: Einstellungen"><br>**Klassisch** · Einstellungen: Wochentage, Sollzeit, Bundesland, Gleitzeit-Korrekturen | <img src="docs/screenshots/klassisch-dunkel-konto.png" alt="Klassisch, dunkel: Kontoverwaltung"><br>**Klassisch** · Benutzerverwaltung für Admins: Konto-Details mit Freigaben und Protokoll |
+| <img src="docs/screenshots/warm-hell-tagesmenue.png" alt="Warm, hell: Tagesmenü"><br>**Warm** · Rechtsklick auf einen Tag: Zeit erfassen, Urlaub, Krank, Berufsschule … | <img src="docs/screenshots/warm-dunkel-neuigkeiten.png" alt="Warm, dunkel: Neuigkeiten"><br>**Warm** · „Neuigkeiten“-Fenster nach Updates |
 
-![Planung im Monatskalender](docs/screenshots/planung.png)
+**Auf dem Handy** (installierbar als Web-App; Tippen plant, langes Drücken öffnet das Tagesmenü):
 
-**Zeiterfassung** – Arbeitszeiten eintragen und bearbeiten:
-
-![Zeiterfassung](docs/screenshots/zeiterfassung.png)
-
-**Designs und Farbmodus** – „Warm“ dunkel und „Klassisch“ hell mit den Einstellungen:
-
-![Design Warm, dunkel](docs/screenshots/warm-dunkel.png)
-
-![Einstellungen im Design Klassisch](docs/screenshots/einstellungen-klassisch.png)
-
-**Benutzerverwaltung** für Admins (Einladungen, Konten, Protokoll):
-
-![Benutzerverwaltung](docs/screenshots/benutzer.png)
-
-**Auf dem Handy** (installierbar als Web-App):
-
-<img src="docs/screenshots/handy.png" alt="Handy-Ansicht" width="320">
+<p>
+  <img src="docs/screenshots/handy-modern-hell-planung.png" alt="Handy, Modern hell: Planung" width="260">
+  <img src="docs/screenshots/handy-klassisch-dunkel-zeiterfassung.png" alt="Handy, Klassisch dunkel: Zeiterfassung" width="260">
+  <img src="docs/screenshots/handy-warm-dunkel-tagesmenue.png" alt="Handy, Warm dunkel: Tagesmenü" width="260">
+</p>
 
 ## Technik
 
