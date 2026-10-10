@@ -34,6 +34,8 @@ const SHORT_HOLIDAYS = {
 // day-off kinds offered in the menu besides "Frei" (they all count like a day off)
 const OFF_OPTIONS = [["frei", "Frei"], ["schule", LABELS.schule], ["krank", "Krank"], ["urlaub", "Urlaub"]];
 const PLAN_CYCLE = [null, "homeoffice", "buero", "frei"];
+// same breakpoint as mobile.css: on phones a time entry is edited by tapping its row
+const PHONE = window.matchMedia("(max-width: 560px)");
 const TIME_STEP = 15;
 const BREAK_STEP = 5;
 
@@ -604,7 +606,13 @@ function renderTable() {
     let cls = "";
     if (entry.id === state.editingId) cls = "editing";
     else if (entry.id === state.highlightEntry || entry.day === state.highlightDay) cls = "highlight";
-    return el("tr", { class: cls, ondblclick: state.readOnly ? undefined : () => startEdit(entry) },
+    return el("tr", {
+      class: cls,
+      ondblclick: state.readOnly ? undefined : () => startEdit(entry),
+      onclick: state.readOnly ? undefined : (event) => {
+        if (PHONE.matches && !event.target.closest("button")) startEdit(entry);
+      },
+    },
       el("td", {}, dayLabel(entry.day, false)),
       el("td", {}, entry.start),
       el("td", {}, entry.end),

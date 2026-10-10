@@ -14,6 +14,8 @@ body {
 }
 .topbar { padding-top: max(12px, env(safe-area-inset-top)); }
 
+.phone-only { display: none; }
+
 /* calendar cells and entry badges: a shorter label on narrow screens (see SHORT_LABELS in app.js) */
 .short { display: none; }
 
@@ -94,7 +96,8 @@ body {
     border-bottom: 1px solid var(--line);
   }
   .entry-list tbody tr::after { content: ""; flex-basis: 100%; order: 2; }
-  .entry-list tbody tr td { border: none; padding: 0; background: none; white-space: nowrap; order: 3; }
+  .entries.entry-list tbody tr td { border: none; padding: 0; background: none; white-space: nowrap; } /* beats zebra rows */
+  .entry-list tbody td { order: 3; } /* second line, unless moved up below */
   .entry-list tbody tr.highlight { background: var(--highlight); }
   .entry-list tbody tr.editing { background: var(--ho); }
   .entry-list td:nth-child(1) { order: 1; font-weight: 600; }
@@ -105,6 +108,11 @@ body {
   .entry-list td:nth-child(5)::after { content: " h"; }
   .entry-list td:nth-child(6) { order: 1; }
   .entry-list td:nth-child(7) { order: 1; margin-left: auto; }
+  .entry-list td.actions button:first-child { display: none; } /* "Bearbeiten": the row itself is tapped */
+  .entry-list tbody tr { cursor: pointer; }
+  .phone-only { display: block; }
+  .entry-list:has(tbody:empty) + .phone-only { display: none; }
+  .entry-list + .phone-only { margin: 8px 4px; }
 
   .entries th, .entries td { padding-inline: 4px; }
 

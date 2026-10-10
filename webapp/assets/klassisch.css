@@ -211,6 +211,7 @@ a { color: var(--accent); }
   /* four tabs share the width with full words; a still narrower phone scrolls them sideways */
   .tabs { overflow-x: auto; scrollbar-width: none; }
   .tabs button { flex: 1 0 auto; padding: 6px 4px; font-size: 13px; white-space: nowrap; }
+  @media (max-width: 380px) { .tabs button { padding-inline: 2px; font-size: 12px; } }
   .tabs button[aria-selected="true"] { padding-top: 4px; }
   .panel { padding: 12px; }
   .topbar h1 { font-size: 19px; }
