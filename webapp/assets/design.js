@@ -53,10 +53,19 @@ const Design = (() => {
     return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
   }
 
-  /** Background at the very top of the page: the header bar (Klassisch) or the page itself. */
-  function updateThemeColor() {
-    const meta = document.querySelector('meta[name="theme-color"]');
+  /**
+   * Background at the very top of the page: the header bar (Klassisch) or the page itself.
+   * `refresh` also replaces the tag: Android's installed app falls back to the manifest colour
+   * (white) when it comes back from the background, and only a new tag makes it apply ours again.
+   */
+  function updateThemeColor(refresh) {
+    let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
+    if (refresh === true) {
+      const fresh = meta.cloneNode();
+      meta.replaceWith(fresh);
+      meta = fresh;
+    }
     const design = document.documentElement.dataset.design || DEFAULT;
     meta.content = PAGE_COLORS[design][isDark() ? "dark" : "light"];
     if (!document.body) return; // still loading: the table above has to do
@@ -115,11 +124,14 @@ const Design = (() => {
   apply(current());
   applyScheme(scheme());
   // the body exists only after parsing; "auto" follows the system scheme when it changes
-  document.addEventListener("DOMContentLoaded", updateThemeColor);
-  window.addEventListener("load", updateThemeColor);
+  document.addEventListener("DOMContentLoaded", () => updateThemeColor());
+  window.addEventListener("load", () => updateThemeColor());
+  // back from the background / from the back-forward cache: apply the colour again
+  window.addEventListener("pageshow", () => updateThemeColor(true));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) updateThemeColor(true); });
   if (window.matchMedia) {
     const dark = window.matchMedia("(prefers-color-scheme: dark)");
-    if (dark.addEventListener) dark.addEventListener("change", updateThemeColor);
+    if (dark.addEventListener) dark.addEventListener("change", () => updateThemeColor());
   }
   return { DESIGNS, current, choose, SCHEMES, scheme, chooseScheme };
 })();
