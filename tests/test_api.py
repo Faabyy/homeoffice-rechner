@@ -194,10 +194,15 @@ class ApiTest(unittest.TestCase):
         conn.execute("DROP TABLE flex_adjustments")
         conn.execute("DROP TABLE viewer_access")  # a database from before these tables existed
         conn.execute("DROP TABLE admin_log")
+        conn.execute("DROP TABLE schema_meta")  # databases from before the schema version was tracked
+        conn.commit()
         conn.close()
         status, data = self.admin.api("data")  # still logged in, data intact, table created again
         self.assertEqual((status, len(data["entries"]), data["flex"]), (200, 1, []))
         self.assertEqual(self.admin.api("flex", {"day": "2026-09-30", "minutes": -20, "note": ""})[0], 200)
+        conn = sqlite3.connect(db)
+        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 1)
+        conn.close()
 
     # -- invitations & administration --
 
@@ -406,6 +411,7 @@ class ApiTest(unittest.TestCase):
         conn.execute("ALTER TABLE users DROP COLUMN is_viewer")
         conn.execute("ALTER TABLE users DROP COLUMN locked_at")
         conn.execute("ALTER TABLE tokens DROP COLUMN is_viewer")
+        conn.execute("DROP TABLE schema_meta")
         conn.commit()
         conn.close()
         status, res = self.admin.api("me")

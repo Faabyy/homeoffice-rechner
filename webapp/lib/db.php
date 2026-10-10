@@ -32,10 +32,24 @@ function db_driver(): string
     return (config('db')['driver'] ?? 'sqlite') === 'mysql' ? 'mysql' : 'sqlite';
 }
 
+// Raise this whenever the schema changes below (new table, new column): databases with a lower
+// version run the migration once and are then marked as current.
+const SCHEMA_VERSION = 1;
+
+function schema_version(PDO $pdo): int
+{
+    try {
+        $value = $pdo->query("SELECT v FROM schema_meta WHERE k = 'version'")->fetchColumn();
+        return $value === false ? 0 : (int) $value;
+    } catch (PDOException $e) {
+        return 0; // databases from before the version was tracked have no schema_meta table
+    }
+}
+
 function ensure_schema(PDO $pdo): void
 {
-    if (table_exists($pdo, 'admin_log')) {
-        return; // newest table exists, so the schema is complete
+    if (schema_version($pdo) >= SCHEMA_VERSION) {
+        return;
     }
     // Create every missing table (with its indexes) and add missing columns. Existing data
     // stays untouched, so a database from an older version simply gets the new parts.
@@ -43,6 +57,10 @@ function ensure_schema(PDO $pdo): void
     $autoId = $mysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY';
     $suffix = $mysql ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4' : '';
     $tables = [
+        'schema_meta' => ["CREATE TABLE schema_meta (
+            k VARCHAR(20) NOT NULL PRIMARY KEY,
+            v INT NOT NULL
+        )$suffix"],
         'users' => ["CREATE TABLE users (
             id $autoId,
             email VARCHAR(254) NOT NULL UNIQUE,         -- stored lowercase
@@ -138,6 +156,8 @@ function ensure_schema(PDO $pdo): void
             $pdo->exec("ALTER TABLE $table ADD COLUMN $column $definition");
         }
     }
+    $pdo->exec("DELETE FROM schema_meta WHERE k = 'version'");
+    $pdo->exec("INSERT INTO schema_meta (k, v) VALUES ('version', " . SCHEMA_VERSION . ')');
 }
 
 function table_exists(PDO $pdo, string $table): bool
