@@ -7,6 +7,16 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Navigationsleiste beim Start nicht mehr weiß
+
+Upload-Ordner: `update-leistenfarbe/`
+
+- `<meta name="theme-color">` steht jetzt vor `design.js` im `<head>` von `lib/app.html` und
+  `lib/login.html`. Vorher fand `design.js` den Tag beim Laden noch nicht, sodass bis zum Ende des
+  Ladens das fest eingetragene Weiß galt (in „Warm“/„Klassisch“ dunkel sichtbar als weiße Leiste).
+- `design.js` setzt die Farbe sofort aus einer Tabelle der Seitenhintergründe je Design und Farbmodus
+  (`PAGE_COLORS`, muss zu den Stylesheets passen) und verfeinert sie nach dem Laden wie bisher.
+
 ## 2026-10-10 – Handy-Ansicht überarbeitet
 
 Upload-Ordner: `update-handy-ansicht/` (nach `update-handy-zugriff/` hochladen)

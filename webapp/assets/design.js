@@ -14,6 +14,13 @@ const Design = (() => {
   const DEFAULT = "modern";
   const SCHEME_KEY = "farbmodus";
   const SCHEMES = { auto: "Automatisch (wie das System)", light: "Hell", dark: "Dunkel" };
+  // Page background per design and scheme (body background in the stylesheets: keep in sync). Used for
+  // theme-color while the page is still loading, so the app's system bars never start out white.
+  const PAGE_COLORS = {
+    modern: { light: "#ffffff", dark: "#16181d" },
+    klassisch: { light: "#e2ddd2", dark: "#0c0f13" },
+    warm: { light: "#f5f3ec", dark: "#1c1b1a" },
+  };
 
   function stored(key, allowed, fallback) {
     try {
@@ -40,10 +47,19 @@ const Design = (() => {
     updateThemeColor();
   }
 
+  function isDark() {
+    const chosen = document.documentElement.dataset.scheme;
+    if (chosen) return chosen === "dark";
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+
   /** Background at the very top of the page: the header bar (Klassisch) or the page itself. */
   function updateThemeColor() {
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta || !document.body) return;
+    if (!meta) return;
+    const design = document.documentElement.dataset.design || DEFAULT;
+    meta.content = PAGE_COLORS[design][isDark() ? "dark" : "light"];
+    if (!document.body) return; // still loading: the table above has to do
     const transparent = (color) => color === "transparent" || /^rgba\(.*,\s*0\)$/.test(color);
     const first = document.body.firstElementChild;
     const atTop = first && first.getBoundingClientRect().top + window.scrollY <= 0;
