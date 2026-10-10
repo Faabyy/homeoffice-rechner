@@ -393,7 +393,7 @@ a { color: var(--accent); }
 .weekday-selects { display: grid; grid-template-rows: repeat(4, auto); grid-auto-flow: column; gap: 6px 24px; }
 .weekday-select { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .weekday-select span { width: 1.8em; }
-.weekday-select select { color: var(--text); width: 15em; max-width: 100%; }
+.weekday-select select { color: var(--text); min-width: 15em; max-width: 100%; }
 .settings-grid > .label:first-child { align-self: start; padding-top: 4px; }
 /* the weekdays get a full row below their label, so the two columns fit next to each other */
 .settings-grid > .weekday-selects { grid-column: 1 / -1; margin: -4px 0 6px; }

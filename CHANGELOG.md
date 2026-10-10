@@ -7,6 +7,13 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Wochentag-Auswahl nicht mehr abgeschnitten
+
+Upload-Ordner: `update-auswahlbreite/`
+
+- `.weekday-select select` hat in `app.css`, `klassisch.css` und `warm.css` `min-width: 15em` statt fester
+  Breite, damit „Arbeitstag (nicht vorbelegt)“ in „Klassisch“ vollständig lesbar ist.
+
 ## 2026-10-10 – Screenshots in der README
 
 Kein Upload nötig (nur Repository).
