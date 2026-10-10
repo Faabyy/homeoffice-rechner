@@ -10,6 +10,9 @@ require __DIR__ . '/lib/bootstrap.php';
 security_headers();
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
+if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+    ob_start('ob_gzhandler'); // the whole data set is sent at once; JSON compresses well
+}
 
 try {
     if (!https_ok()) {

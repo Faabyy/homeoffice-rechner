@@ -305,15 +305,19 @@ function import_data(int $userId, $payload): void
         db_exec('DELETE FROM entries WHERE user_id = ?', [$userId]);
         db_exec('DELETE FROM plan WHERE user_id = ?', [$userId]);
         db_exec('DELETE FROM flex_adjustments WHERE user_id = ?', [$userId]);
-        foreach ($flex as $item) {
-            insert_flex($userId, bin2hex(random_bytes(16)), $item);
-        }
         db_exec('UPDATE users SET settings = ? WHERE id = ?', [json_encode($settings), $userId]);
-        foreach ($entries as $entry) {
-            insert_entry($userId, bin2hex(random_bytes(16)), $entry);
-        }
+        db_insert_many('flex_adjustments', ['id', 'user_id', 'day', 'minutes', 'note'],
+            array_map(function ($f) use ($userId) {
+                return [bin2hex(random_bytes(16)), $userId, $f['day'], $f['minutes'], $f['note']];
+            }, $flex));
+        db_insert_many('entries', ['id', 'user_id', 'day', 'start_time', 'end_time', 'break_minutes', 'location'],
+            array_map(function ($e) use ($userId) {
+                return [bin2hex(random_bytes(16)), $userId, $e['day'], $e['start'], $e['end'], $e['break'], $e['location']];
+            }, $entries));
+        $planRows = [];
         foreach ($plan as $day => $status) {
-            db_exec('INSERT INTO plan (user_id, day, status) VALUES (?, ?, ?)', [$userId, $day, $status]);
+            $planRows[] = [$userId, $day, $status];
         }
+        db_insert_many('plan', ['user_id', 'day', 'status'], $planRows);
     });
 }

@@ -221,3 +221,19 @@ function db_exec(string $sql, array $params = []): int
     $stmt->execute($params);
     return $stmt->rowCount();
 }
+
+/**
+ * Insert many rows with multi-row INSERTs (far fewer round trips than one statement per row,
+ * which matters over the network with MySQL). Chunked to stay below the bound-parameter limit.
+ * @param string[] $columns
+ * @param array<int,array<int,mixed>> $rows values in the order of $columns
+ */
+function db_insert_many(string $table, array $columns, array $rows): void
+{
+    $perRow = '(' . implode(', ', array_fill(0, count($columns), '?')) . ')';
+    foreach (array_chunk($rows, max(1, intdiv(500, count($columns)))) as $chunk) {
+        $sql = "INSERT INTO $table (" . implode(', ', $columns) . ') VALUES '
+            . implode(', ', array_fill(0, count($chunk), $perRow));
+        db_exec($sql, array_merge(...$chunk));
+    }
+}

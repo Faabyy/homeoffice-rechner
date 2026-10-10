@@ -158,6 +158,26 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(self.admin.api("import", overlapping)[0], 400)
         self.assertEqual(len(self.admin.api("data")[1]["entries"]), 2)  # unchanged
 
+    def test_import_many_rows_in_chunks(self):
+        days = [f"2025-{m:02d}-{d:02d}" for m in range(1, 13) for d in range(1, 29)]  # 336 > one INSERT chunk
+        payload = {"settings": {"workdays": [0, 1, 2, 3, 4], "dailyMinutes": 480, "limitPercent": 30,
+                                "state": None, "defaultStart": "08:00", "defaultBreak": 30},
+                   "entries": [{**ENTRY, "day": day} for day in days],
+                   "plan": {day: "frei" for day in days},
+                   "flex": [{"day": day, "minutes": 5, "note": ""} for day in days]}
+        status, data = self.admin.api("import", payload)
+        self.assertEqual(status, 200, data)
+        self.assertEqual([e["day"] for e in data["entries"]], days)
+        self.assertEqual((len(data["plan"]), len(data["flex"])), (336, 336))
+
+    def test_responses_are_compressed_on_request(self):
+        import gzip
+        status, headers, raw = self.admin.request("GET", "api.php?action=me", headers={"Accept-Encoding": "gzip"})
+        if headers.get("Content-Encoding") != "gzip":
+            self.skipTest("PHP ohne zlib")
+        self.assertEqual(status, 200)
+        self.assertIn("user", __import__("json").loads(gzip.decompress(raw)))
+
     # -- flextime corrections --
 
     def test_flex_corrections(self):
