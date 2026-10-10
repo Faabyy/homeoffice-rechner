@@ -7,6 +7,27 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Handy-Ansicht überarbeitet
+
+Upload-Ordner: `update-handy-ansicht/` (nach `update-handy-zugriff/` hochladen)
+
+- Systemleisten der installierten App: `design.js` setzt `<meta name="theme-color">` auf die Farbe oben
+  auf der Seite (Kopfleiste in „Klassisch“, sonst der Seitenhintergrund), auch bei Design-, Farbmodus- und
+  Systemwechsel. `viewport-fit=cover` mit `env(safe-area-inset-*)`-Abständen, damit die Seite unter der
+  Navigationsleiste weiterläuft. Manifest: `theme_color` weiß statt blau.
+- Neue `assets/mobile.css` für alle drei Designs (nach den Design-Stylesheets geladen, nie abgeschaltet):
+  kompakte Kopfzeile (Titel und Links in einer Zeile, Monat darunter), Tagesmenü als Blatt am unteren
+  Rand, 16-px-Felder (kein Zoom auf dem iPhone) und größere Tippflächen, Einträge als zweizeilige Zeilen
+  statt breiter Tabelle, Übersicht nur in Planung und Zeiterfassung.
+- Kalender auf Handys: kurze Beschriftungen („HO“, „Schule“, „Büro 8:00“) und gekürzte Feiertagsnamen
+  mit weichen Trennstellen (`SHORT_LABELS`, `SHORT_HOLIDAYS` in `app.js`).
+- Langes Drücken auf einen Tag öffnet das Tagesmenü (`setupLongPress()`; iOS kennt kein `contextmenu`
+  bei langem Tippen), der Hinweis unter dem Kalender nennt auf Touch-Geräten Tippen/lange drücken.
+- Einträge werden auf Handys durch Antippen der Zeile bearbeitet (der Knopf „Bearbeiten“ ist dort
+  ausgeblendet).
+- Reiter in allen Designs ohne abgeschnittene Wörter.
+- Tests: `test_phone_view` in `tests/test_ui.py`; `test_design_switch` zählt nur die Design-Stylesheets.
+
 ## 2026-10-10 – Handy-App, Zugriffssperre, Vorbereitung für GitHub
 
 Upload-Ordner: `update-handy-zugriff/` – enthält auch alle Dateien aus `update-design/` (die Einträge vom

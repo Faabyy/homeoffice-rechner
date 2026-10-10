@@ -9,6 +9,19 @@
 
 const CHANGELOG = [
   {
+    id: "2026-10-10-handy-ansicht",
+    date: "2026-10-10",
+    title: "Besser auf dem Handy",
+    items: [
+      "Die Ansicht auf dem Handy ist aufgeräumter: kompaktere Kopfzeile, kurze Beschriftungen im Kalender "
+        + "(z. B. „HO“) und größere Felder und Knöpfe.",
+      "Lange auf einen Tag drücken öffnet das Menü für Urlaub, Krank, Berufsschule und die Zeiterfassung, "
+        + "jetzt auch auf dem iPhone.",
+      "Einträge in der Zeiterfassung bearbeitest du auf dem Handy, indem du sie antippst.",
+      "Als App auf dem Startbildschirm passen sich die Leisten oben und unten an die Farben der Seite an.",
+    ],
+  },
+  {
     id: "2026-10-10-handy",
     date: "2026-10-10",
     title: "Als App auf dem Handy",
