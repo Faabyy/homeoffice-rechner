@@ -62,6 +62,20 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(status, 429)
         self.assertIn("15 Minuten", res["error"])
 
+    def test_manifest_colours_follow_the_look_cookie(self):
+        def colours(cookie=None):
+            headers = {"Cookie": cookie} if cookie else {}
+            status, hdrs, raw = Client(self.server).request("GET", "manifest.php", headers=headers)
+            self.assertEqual(status, 200)
+            self.assertIn("manifest+json", hdrs["Content-Type"])
+            manifest = __import__("json").loads(raw)
+            return manifest["theme_color"], manifest["background_color"], manifest["start_url"]
+        self.assertEqual(colours(), ("#ffffff", "#ffffff", "./"))
+        self.assertEqual(colours("look=warm-dark")[:2], ("#1c1b1a", "#1c1b1a"))
+        self.assertEqual(colours("look=klassisch-light")[:2], ("#e2ddd2", "#e2ddd2"))
+        for junk in ("look=evil-dark", "look=warm-purple", "look=../../x", "look="):
+            self.assertEqual(colours(junk)[:2], ("#ffffff", "#ffffff"), junk)
+
     def test_protected_files_are_not_served_by_api(self):
         self.assertEqual(Client(self.server).api("data")[0], 401)
         self.assertEqual(self.admin.api("unbekannt")[0], 404)

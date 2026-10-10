@@ -229,6 +229,10 @@ class UiTest(unittest.TestCase):
         self.assertIsNone(self.js("document.documentElement.dataset.scheme ?? null"))  # default: automatic
         self.js("{ const s = document.getElementById('s-scheme'); s.value = 'dark'; s.dispatchEvent(new Event('change')) }")
         self.assertEqual(self.js("getComputedStyle(document.documentElement).colorScheme"), "dark")
+        # the installed app's colours follow the choice (cookie read by manifest.php)
+        self.assertIn("look=warm-dark", self.js("document.cookie"))
+        manifest = self.js("fetch('manifest.php', { credentials: 'include' }).then(r => r.json())")
+        self.assertEqual((manifest["theme_color"], manifest["background_color"]), ("#1c1b1a", "#1c1b1a"))
         b.goto(self.server.base + "#einstellungen")
         b.wait_for("!!document.getElementById('s-scheme')")
         self.assertEqual(self.js("[document.documentElement.dataset.scheme, document.getElementById('s-scheme').value]"),

@@ -54,11 +54,24 @@ const Design = (() => {
   }
 
   /**
+   * Design and colour scheme in the cookie `look`, which manifest.php turns into the colours of
+   * the installed app (splash screen, system bars on Android).
+   */
+  function rememberLook() {
+    try {
+      const design = document.documentElement.dataset.design || DEFAULT;
+      document.cookie = `look=${design}-${isDark() ? "dark" : "light"}; path=/; max-age=31536000; SameSite=Lax`
+        + (location.protocol === "https:" ? "; Secure" : "");
+    } catch { /* cookies blocked: the app keeps the default colours */ }
+  }
+
+  /**
    * Background at the very top of the page: the header bar (Klassisch) or the page itself.
    * `refresh` also replaces the tag: Android's installed app falls back to the manifest colour
    * (white) when it comes back from the background, and only a new tag makes it apply ours again.
    */
   function updateThemeColor(refresh) {
+    rememberLook();
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
     if (refresh === true) {

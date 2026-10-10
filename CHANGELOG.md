@@ -7,6 +7,20 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Startbildschirm und untere Leiste der Android-App folgen dem Design
+
+Upload-Ordner: `update-manifest/` (`manifest.webmanifest` auf dem Server löschen)
+
+- Ursache des weißen Startbildschirms und der weißen unteren Leiste: `manifest.webmanifest` hatte feste Farben
+  `#ffffff`; Android nimmt Splash-Screen und Systemleisten der installierten App daraus.
+- Neu: `manifest.php` erzeugt das Manifest; `theme_color`/`background_color` richten sich nach dem Cookie `look`
+  (`<design>-<light|dark>`), das `design.js` bei jeder Design-/Farbmodus-Wahl und beim Systemwechsel setzt.
+  Die Link-Tags in `lib/app.html`/`lib/login.html` zeigen darauf (`crossorigin="use-credentials"`, damit das
+  Cookie mitgeschickt wird). Die Farbtabelle muss zu `PAGE_COLORS` in `design.js` passen.
+- Android übernimmt ein geändertes Manifest erst beim Aktualisieren der installierten App (etwa einmal am Tag);
+  sofort sieht man es nach Deinstallieren und erneutem „Zum Startbildschirm hinzufügen“. „Automatisch“ hält die
+  Farbe des Systemmodus zum Zeitpunkt des letzten Öffnens. Nicht auf einem Android-Gerät geprüft.
+
 ## 2026-10-10 – Leistenfarbe nach Rückkehr in die App
 
 Upload-Ordner: `update-leistenfarbe2/`
