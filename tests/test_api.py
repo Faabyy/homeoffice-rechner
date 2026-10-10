@@ -423,8 +423,10 @@ class ApiTest(unittest.TestCase):
 
     def test_automatic_backup(self):
         backups = Path(self.server.tmp.name) / "backups"
-        self.assertFalse(backups.exists())  # nothing before a logged-in request
+        self.assertFalse(backups.exists())  # nothing before the app is opened
         self.admin.api("entry", ENTRY)
+        self.assertFalse(backups.exists())  # single changes don't check for a backup
+        self.admin.api("me")
         files = sorted(backups.glob("sicherung-*.sqlite"))
         self.assertEqual(len(files), 1)
         conn = sqlite3.connect(files[0])
@@ -432,7 +434,7 @@ class ApiTest(unittest.TestCase):
         conn.close()
         self.assertTrue((backups / ".htaccess").exists())
         self.assertEqual(list(backups.glob("*.tmp")), [])
-        self.admin.api("data")  # not due yet
+        self.admin.api("me")  # not due yet
         self.assertEqual(len(list(backups.glob("sicherung-*.sqlite"))), 1)
         _, overview = self.admin.api("admin-overview")
         self.assertEqual((overview["backup"]["enabled"], overview["backup"]["count"]), (True, 1))
@@ -440,7 +442,7 @@ class ApiTest(unittest.TestCase):
 
     def test_backup_rotation_keeps_newest(self):
         backups = Path(self.server.tmp.name) / "backups"
-        self.admin.api("data")
+        self.admin.api("me")
         for old in backups.glob("sicherung-*.sqlite"):
             old.unlink()
         week_ago = time.time() - 8 * 86400
@@ -449,7 +451,7 @@ class ApiTest(unittest.TestCase):
             fake.write_bytes(b"x")
             os.utime(fake, (week_ago, week_ago))
         (backups / ".lock").unlink()  # forget the last attempt
-        self.admin.api("data")
+        self.admin.api("me")
         names = sorted(p.name for p in backups.glob("sicherung-*.sqlite"))
         self.assertEqual(len(names), 8)
         self.assertTrue(names[-1].startswith("sicherung-2026") or names[-1] > "sicherung-2021")

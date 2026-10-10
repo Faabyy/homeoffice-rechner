@@ -97,9 +97,9 @@ function handle_api(string $method, string $action, array $body)
         throw new UserError('Bitte melde dich an.', 401);
     }
     $uid = $user['id'];
-    maybe_backup();
     switch ("$method $action") {
         case 'GET me':
+            maybe_backup(); // once per app start is plenty for a backup every few days
             return ['user' => $user] + account_info($uid);
         case 'POST password':
             change_password($user, str_field($body, 'current'), str_field($body, 'new'));

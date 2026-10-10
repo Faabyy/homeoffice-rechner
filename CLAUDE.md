@@ -47,7 +47,7 @@ Every day with logged entries has the daily target (`settings.dailyMinutes`) as 
 
 ## Automatic backups
 
-`lib/backup.php`: `maybe_backup()` runs on every logged-in API request (no cron on the webspace); when the newest file in `data/backups/` is older than `backup_days` (default 7, config key, 0 = off) it writes `sicherung-<date>-<random>.sqlite` via `VACUUM INTO` (fallback: locked file copy), keeps the newest `backup_keep` (default 8), never throws, retries at most hourly after a failure (`.lock` file). SQLite only. The admin overview reports status (`backup`), shown in the Benutzer tab.
+`lib/backup.php`: `maybe_backup()` runs on `GET me`, i.e. once per app start (no cron on the webspace); when the newest file in `data/backups/` is older than `backup_days` (default 7, config key, 0 = off) it writes `sicherung-<date>-<random>.sqlite` via `VACUUM INTO` (fallback: locked file copy), keeps the newest `backup_keep` (default 8), never throws, retries at most hourly after a failure (`.lock` file). SQLite only. The admin overview reports status (`backup`), shown in the Benutzer tab.
 
 ## Database migrations
 

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 // Automatic backups of the SQLite database. There is no cron job on the shared webspace, so
-// the first request of a logged-in user after the interval has passed makes the backup.
+// the first app start (api.php `me`) of a logged-in user after the interval has passed makes the backup.
 // Copies live in data/backups/ (denied to the web by data/.htaccess) and the oldest are
 // deleted beyond the configured number. With MySQL nothing happens: the host backs that up.
 // Config (lib/config.php, optional): 'backup_days' (default 7, 0 = off), 'backup_keep' (default 8).
