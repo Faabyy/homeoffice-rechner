@@ -7,6 +7,14 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Screenshots in der README
+
+Kein Upload nötig (nur Repository).
+
+- `docs/screenshots/*.png` (Demo-Daten, erzeugt mit headless Chromium) und Abschnitt „Screenshots“ in `README.md`.
+- `demo/seed.py`: Benutzername `demo` statt E-Mail-Adresse, mehr erfasste Tage, Freitag nicht mehr als
+  Homeoffice vorbelegt, damit die Prognose im Rahmen bleibt.
+
 ## 2026-10-10 – Benutzername statt E-Mail-Adresse
 
 Upload-Ordner: `update-benutzername/`

@@ -18,6 +18,32 @@ Prüfung gegen eine monatliche Homeoffice-Grenze (Standard: höchstens 30 % der 
 - „Neuigkeiten“-Fenster nach Updates
 - Auf Android und iPhone als App installierbar (Web-App, ohne App-Store)
 
+## Screenshots
+
+Alle Bilder zeigen die Demo-Daten (`demo/`, siehe `demo/LIESMICH.md`).
+
+**Planung** – Monatskalender mit Prognose und Gleitzeitkonto (Design „Modern“):
+
+![Planung im Monatskalender](docs/screenshots/planung.png)
+
+**Zeiterfassung** – Arbeitszeiten eintragen und bearbeiten:
+
+![Zeiterfassung](docs/screenshots/zeiterfassung.png)
+
+**Designs und Farbmodus** – „Warm“ dunkel und „Klassisch“ hell mit den Einstellungen:
+
+![Design Warm, dunkel](docs/screenshots/warm-dunkel.png)
+
+![Einstellungen im Design Klassisch](docs/screenshots/einstellungen-klassisch.png)
+
+**Benutzerverwaltung** für Admins (Einladungen, Konten, Protokoll):
+
+![Benutzerverwaltung](docs/screenshots/benutzer.png)
+
+**Auf dem Handy** (installierbar als Web-App):
+
+<img src="docs/screenshots/handy.png" alt="Handy-Ansicht" width="320">
+
 ## Technik
 
 Reines PHP (ab 7.4) ohne Abhängigkeiten, SQLite (optional MySQL/MariaDB), statisches JavaScript ohne
