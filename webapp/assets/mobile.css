@@ -13,6 +13,7 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 .topbar { padding-top: max(12px, env(safe-area-inset-top)); }
+body:not(:has(.topbar)) { padding-top: env(safe-area-inset-top); } /* login and setup pages */
 
 .phone-only { display: none; }
 

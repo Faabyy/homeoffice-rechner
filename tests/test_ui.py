@@ -204,8 +204,11 @@ class UiTest(unittest.TestCase):
     def test_design_switch(self):
         b = self.browser
         self.login("admin@example.org", "geheim12345")
-        active = "[...document.styleSheets].filter(s => !s.disabled).map(s => s.ownerNode.id)"
+        active = ("[...document.styleSheets].filter(s => !s.disabled).map(s => s.ownerNode.id)"
+                  ".filter(id => id.startsWith('css-'))")
         self.assertEqual(self.js(active), ["css-modern"])  # default
+        # mobile.css applies to every design
+        self.assertTrue(self.js("[...document.styleSheets].some(s => s.href.includes('mobile.css') && !s.disabled)"))
         self.js("document.querySelector('[data-tab=einstellungen]').click();"
                 "const d = document.getElementById('s-design'); d.value = 'klassisch'; d.dispatchEvent(new Event('change'))")
         # the current stylesheet stays until the chosen one has loaded (no unstyled moment)
@@ -239,6 +242,57 @@ class UiTest(unittest.TestCase):
         self.js("document.getElementById('logout').click()")
         b.wait_for("location.pathname === '/login.php'")
         self.assertEqual(self.js(active), ["css-warm"])
+        self.assertEqual(b.errors, [])
+
+    def test_phone_view(self):
+        b = self.browser
+        b.call("Emulation.setDeviceMetricsOverride", width=390, height=844, deviceScaleFactor=2, mobile=True)
+        b.call("Emulation.setTouchEmulationEnabled", enabled=True, maxTouchPoints=5)
+        b.call("Emulation.setEmulatedMedia", features=[{"name": "pointer", "value": "coarse"},
+                                                       {"name": "hover", "value": "none"}])
+        self.login("admin@example.org", "geheim12345")
+        self.js("state.year = 2026; state.month = 10; render()")
+        day = cell("Fr 09.10.2026")
+
+        def touch(duration, move=0):
+            x, y = self.js(f"(() => {{ const r = {day}.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }})()")
+            b.call("Input.dispatchTouchEvent", type="touchStart", touchPoints=[{"x": x, "y": y}])
+            if move:
+                b.call("Input.dispatchTouchEvent", type="touchMove", touchPoints=[{"x": x, "y": y + move}])
+            b.wait_for("new Promise(r => setTimeout(() => r(true), %d))" % (duration * 1000))
+            b.call("Input.dispatchTouchEvent", type="touchEnd", touchPoints=[])
+
+        # a tap plans the day, the cell shows the short label
+        touch(0.1)
+        b.wait_for(f"{day}.classList.contains('c-homeoffice')")
+        self.assertEqual(self.js(f"{day}.querySelector('.txt').innerText"), "HO")
+        self.assertIn("lange drücken", self.js("document.querySelector('.legend .hint').innerText"))
+        # holding the day opens its menu and leaves the plan alone; moving the finger does nothing
+        touch(0.8)
+        b.wait_for("!document.getElementById('context-menu').hidden")
+        self.assertTrue(self.js(f"{day}.classList.contains('c-homeoffice')"))
+        self.js("document.getElementById('context-menu').hidden = true")
+        touch(0.8, move=40)
+        self.assertTrue(self.js("document.getElementById('context-menu').hidden"))
+        self.assertTrue(self.js(f"{day}.classList.contains('c-homeoffice')"))
+
+        # time entries: two-line rows, edited by tapping the row
+        self.js(f"{day}.dispatchEvent(new MouseEvent('contextmenu', {{bubbles: true, clientX: 50, clientY: 50}}));"
+                "document.querySelector('#context-menu button').click();"
+                "document.getElementById('f-start').value = '08:00'; document.getElementById('f-end').value = '16:30';"
+                "document.getElementById('entry-form').requestSubmit()")
+        b.wait_for("document.querySelectorAll('#entries-body tr').length === 1")
+        self.assertEqual(self.js("getComputedStyle(document.querySelector('.entry-list thead')).display"), "none")
+        self.assertEqual(self.js("getComputedStyle(document.querySelector('#entries-body button')).display"), "none")
+        self.js("document.querySelector('#entries-body td').click()")
+        self.assertEqual(self.js("document.getElementById('form-title').textContent"), "Eintrag bearbeiten")
+
+        # the summary stays on the planning tabs; the status bar takes the page colour
+        self.assertNotEqual(self.js("getComputedStyle(document.getElementById('summary')).display"), "none")
+        self.js("document.querySelector('[data-tab=einstellungen]').click()")
+        self.assertEqual(self.js("getComputedStyle(document.getElementById('summary')).display"), "none")
+        self.assertEqual(self.js("document.querySelector('meta[name=theme-color]').content"), "rgb(255, 255, 255)")
+        self.assertEqual(self.js("document.documentElement.scrollWidth"), 390)  # nothing sticks out sideways
         self.assertEqual(b.errors, [])
 
     def test_account_management(self):
