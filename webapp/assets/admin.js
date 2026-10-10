@@ -9,7 +9,7 @@
 const ROLE_LABELS = { user: "Nutzer", admin: "Admin", viewer: "Nur Lesen" };
 // actions in the admin log (admin_log.action, written by lib/admin.php)
 const ADMIN_ACTIONS = { invite: "Eingeladen", reset: "Passwort-Link erstellt", revoke: "Link zurückgezogen",
-  role: "Rolle geändert", email: "E-Mail geändert", lock: "Gesperrt", unlock: "Entsperrt",
+  role: "Rolle geändert", email: "E-Mail geändert" /* old log entries */, username: "Benutzername geändert", lock: "Gesperrt", unlock: "Entsperrt",
   logout: "Überall abgemeldet", access: "Freigaben geändert", export: "Daten exportiert", delete: "Konto gelöscht" };
 
 const admin = {
@@ -28,12 +28,12 @@ async function loadAdmin() {
     return false;
   }
   const self = accountById(state.user.id);
-  if (self && self.email !== state.user.email) { // the admin changed the own e-mail
-    state.user.email = self.email;
-    $("user-email").textContent = self.email;
+  if (self && self.username !== state.user.username) { // the admin changed the own username
+    state.user.username = self.username;
+    $("user-name").textContent = self.username;
   }
   // the admin's own account may just have been assigned or removed
-  state.data.viewers = admin.overview.users.filter((u) => u.isViewer && u.canView.includes(state.user.id)).map((u) => u.email);
+  state.data.viewers = admin.overview.users.filter((u) => u.isViewer && u.canView.includes(state.user.id)).map((u) => u.username);
   renderViewers();
   renderUsers();
   renderLinks();
@@ -54,10 +54,10 @@ function accessSummary(u) {
 function renderUsers() {
   const search = $("u-search").value.trim().toLowerCase();
   const filter = $("u-filter").value;
-  const users = admin.overview.users.filter((u) => u.email.includes(search)
+  const users = admin.overview.users.filter((u) => u.username.includes(search)
     && (!filter || (filter === "locked" ? u.lockedAt !== null : u.role === filter)));
   $("users-body").replaceChildren(...users.map((u) => el("tr", { class: "clickable", onclick: () => openAccount(u.id) },
-    el("td", {}, u.email, u.id === state.user.id ? el("span", { class: "muted" }, " (du)") : null),
+    el("td", {}, u.username, u.id === state.user.id ? el("span", { class: "muted" }, " (du)") : null),
     el("td", {}, ROLE_LABELS[u.role]),
     el("td", {}, u.lockedAt ? el("span", { class: "badge locked" }, "Gesperrt") : "Aktiv"),
     el("td", {}, accessSummary(u)),
@@ -72,7 +72,7 @@ function renderUsers() {
 function renderLinks() {
   const links = admin.overview.links;
   $("links-body").replaceChildren(...links.map((l) => el("tr", {},
-    el("td", {}, l.email),
+    el("td", {}, l.username),
     el("td", {}, l.kind !== "invite" ? "Passwort-Link"
       : l.isAdmin ? "Einladung (Admin)" : l.isViewer ? "Einladung (Nur Lesen)" : "Einladung"),
     el("td", {}, germanDateTime(l.expiresAt)),
@@ -113,7 +113,7 @@ function openAccount(id) {
   admin.detailId = id;
   renderAccount();
   $("account-dialog").showModal();
-  $("account-title").focus(); // not the e-mail field, which showModal would focus
+  $("account-title").focus(); // not the username field, which showModal would focus
 }
 
 function setDetailStatus(message, isError = false) {
@@ -155,14 +155,15 @@ function accessSection(u) {
     : api("admin-owner-access", { id: u.id, viewers: ids() })), "Freigaben gespeichert ✓");
   return detailSection("Freigaben",
     el("p", { class: "hint" }, u.isViewer ? "Darf diese Konten sehen:" : "Sichtbar für diese Lese-Konten:"),
-    el("div", { class: "access" }, ...candidates.map((o, i) => el("label", { class: "checkbox" }, boxes[i], o.email))),
+    el("div", { class: "access" }, ...candidates.map((o, i) => el("label", { class: "checkbox" }, boxes[i], o.username))),
     el("div", { class: "form-actions" }, el("button", { type: "button", onclick: save }, "Freigaben speichern")));
 }
 
 function renderAccount() {
   const u = accountById(admin.detailId);
   const self = u.id === state.user.id;
-  const email = el("input", { type: "email", class: "w-email", value: u.email, "aria-label": "E-Mail-Adresse" });
+  const username = el("input", { type: "text", class: "w-email", value: u.username, "aria-label": "Benutzername",
+    autocapitalize: "none", spellcheck: false });
   const role = el("select", { "aria-label": "Rolle", disabled: self },
     ...Object.entries(ROLE_LABELS).map(([value, label]) => el("option", { value, selected: value === u.role }, label)));
   const status = u.lockedAt ? `Gesperrt seit ${germanDateTime(u.lockedAt)}` : "Aktiv";
@@ -170,12 +171,12 @@ function renderAccount() {
 
   const button = (label, onclick, props = {}) => el("button", { type: "button", onclick, ...props }, label);
   $("account-detail").replaceChildren(
-    el("h3", { id: "account-title", tabIndex: -1 }, u.email, self ? el("span", { class: "muted" }, " (du)") : null),
+    el("h3", { id: "account-title", tabIndex: -1 }, u.username, self ? el("span", { class: "muted" }, " (du)") : null),
     el("p", { class: "hint" }, `${ROLE_LABELS[u.role]} · seit ${Logic.germanDate(u.createdAt)} · ${status}`),
 
     detailSection("Konto",
-      el("div", { class: "form-actions" }, email, button("E-Mail ändern", () => accountAction(
-        () => api("admin-email", { id: u.id, email: email.value }), "E-Mail geändert ✓"))),
+      el("div", { class: "form-actions" }, username, button("Benutzername ändern", () => accountAction(
+        () => api("admin-username", { id: u.id, username: username.value }), "Benutzername geändert ✓"))),
       el("div", { class: "form-actions" }, role, button("Rolle ändern", () => accountAction(
         () => api("admin-role", { id: u.id, role: role.value }), "Rolle geändert ✓"),
         { disabled: self, title: self ? "Deine eigene Rolle kann nur ein anderer Admin ändern." : undefined }))),
@@ -184,11 +185,11 @@ function renderAccount() {
       el("p", { class: "hint" }, `${status} · ${plural(u.sessions, "aktive Sitzung", "aktive Sitzungen")}`),
       el("div", { class: "form-actions wrap" },
         button("Passwort-Link erstellen", async () => {
-          const result = await accountAction(() => api("admin-reset", { email: u.email }), "Passwort-Link erstellt ✓");
-          if (result) showLinkIn($("detail-link"), `Passwort-Link für ${u.email}. Er ist 24 Stunden gültig und funktioniert einmal.`, result.link);
+          const result = await accountAction(() => api("admin-reset", { username: u.username }), "Passwort-Link erstellt ✓");
+          if (result) showLinkIn($("detail-link"), `Passwort-Link für ${u.username}. Er ist 24 Stunden gültig und funktioniert einmal.`, result.link);
         }, { disabled: Boolean(u.lockedAt) }),
         self ? null : button(u.lockedAt ? "Entsperren" : "Sperren", () => {
-          if (!u.lockedAt && !window.confirm(`${u.email} sperren? Die Person wird sofort abgemeldet und kann sich nicht mehr anmelden; die Daten bleiben erhalten.`)) return;
+          if (!u.lockedAt && !window.confirm(`${u.username} sperren? Die Person wird sofort abgemeldet und kann sich nicht mehr anmelden; die Daten bleiben erhalten.`)) return;
           accountAction(() => api("admin-lock", { id: u.id, locked: !u.lockedAt }), u.lockedAt ? "Entsperrt ✓" : "Gesperrt ✓");
         }),
         self ? null : button("Überall abmelden", () => accountAction(() => api("admin-logout", { id: u.id }),
@@ -200,7 +201,7 @@ function renderAccount() {
     u.isViewer ? null : detailSection("Daten",
       el("div", { class: "form-actions" }, button("Daten exportieren", () => accountAction(async () => {
         const data = await api(`admin-export&id=${u.id}`);
-        downloadExport(data, `homeoffice-rechner-${data.email}-${Logic.today()}.json`);
+        downloadExport(data, `homeoffice-rechner-${data.username}-${Logic.today()}.json`);
       }, "Export heruntergeladen ✓")))),
 
     detailSection("Protokoll", log.length
@@ -209,7 +210,7 @@ function renderAccount() {
 
     el("div", { class: "form-actions detail-footer" },
       self ? null : button("Konto löschen", async () => {
-        if (!window.confirm(`Konto ${u.email} mit allen Daten endgültig löschen?`)) return;
+        if (!window.confirm(`Konto ${u.username} mit allen Daten endgültig löschen?`)) return;
         await accountAction(() => api("admin-delete-user", { id: u.id }), "");
       }, { class: "danger" }),
       el("span", { id: "detail-status", class: "status", role: "status" }),
@@ -230,11 +231,11 @@ function showLinkIn(box, text, url) {
 async function invite(event) {
   event.preventDefault();
   $("invite-error").textContent = "";
-  const email = $("i-email").value.trim();
+  const username = $("i-username").value.trim();
   try {
     const role = $("i-role").value;
-    const { link } = await api("admin-invite", { email, isAdmin: role === "admin", isViewer: role === "viewer" });
-    showLinkIn($("link-box"), `Schicke diesen Link an ${email}. Er ist 7 Tage gültig und funktioniert einmal.`, link);
+    const { link } = await api("admin-invite", { username, isAdmin: role === "admin", isViewer: role === "viewer" });
+    showLinkIn($("link-box"), `Schicke diesen Link an ${username}. Er ist 7 Tage gültig und funktioniert einmal.`, link);
     $("invite-form").reset();
   } catch (error) {
     $("invite-error").textContent = error.message;

@@ -23,7 +23,7 @@ async function login(event) {
   event.preventDefault();
   showError("");
   try {
-    await post("login", { email: $("email").value, password: $("password").value });
+    await post("login", { username: $("username").value, password: $("password").value });
     location.href = "./";
   } catch (error) {
     showError(error.message);
@@ -44,7 +44,7 @@ async function setupRedeem(token) {
   }
   const invite = info.kind === "invite";
   $("redeem-title").textContent = invite ? "Konto anlegen" : "Neues Passwort festlegen";
-  $("redeem-email").textContent = `für ${info.email}`;
+  $("redeem-username").textContent = `für ${info.username}`;
   $("redeem-submit").textContent = invite ? "Konto anlegen" : "Passwort speichern";
   $("redeem-form").hidden = false;
   $("new-password").focus();
@@ -71,5 +71,5 @@ if (token) {
   setupRedeem(token);
 } else {
   $("login-form").addEventListener("submit", login);
-  $("email").focus();
+  $("username").focus();
 }

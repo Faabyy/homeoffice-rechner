@@ -14,7 +14,7 @@ class AccessRestrictionTest(unittest.TestCase):
         self.addCleanup(self.server.close)
         admin = Client(self.server)
         self.assertEqual(admin.setup_admin(), 302)
-        status, res = admin.api("admin-invite", {"email": "kollegin@example.org"}, **{"User-Agent": LAPTOP})
+        status, res = admin.api("admin-invite", {"username": "kollegin@example.org"}, **{"User-Agent": LAPTOP})
         self.assertEqual(status, 200, res)
         return res["link"].split("token=")[1]
 
@@ -27,11 +27,11 @@ class AccessRestrictionTest(unittest.TestCase):
         self.assertEqual(phone.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": PHONE})[0], 200)
         self.assertEqual(phone.api("me", **{"User-Agent": PHONE})[0], 200)
         self.assertEqual(phone.api("me", **{"User-Agent": LAPTOP})[0], 401)  # same session, laptop browser
-        login = {"email": "kollegin@example.org", "password": "kollegin-pw-1"}
+        login = {"username": "kollegin@example.org", "password": "kollegin-pw-1"}
         self.assertEqual(laptop.api("login", login, **{"User-Agent": LAPTOP})[0], 403)
         self.assertEqual(laptop.api("login", login, **{"User-Agent": PHONE})[0], 200)
         admin = Client(self.server)
-        status, res = admin.api("login", {"email": "admin@example.org", "password": "geheim12345"}, **{"User-Agent": LAPTOP})
+        status, res = admin.api("login", {"username": "admin@example.org", "password": "geheim12345"}, **{"User-Agent": LAPTOP})
         self.assertEqual(status, 200, res)
         self.assertEqual(admin.api("data", **{"User-Agent": LAPTOP})[0], 200)
 

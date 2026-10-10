@@ -125,7 +125,7 @@ class Client:
         return status, json.loads(raw or b"{}")
 
     def setup_admin(self, email: str = "admin@example.org", password: str = "geheim12345") -> int:
-        form = f"email={email}&password={password}&password2={password}".encode()
+        form = f"username={email}&password={password}&password2={password}".encode()
         status, _, _ = self.request("POST", f"setup.php?key={SETUP_KEY}", form,
                                     {"Content-Type": "application/x-www-form-urlencoded"})
         return status

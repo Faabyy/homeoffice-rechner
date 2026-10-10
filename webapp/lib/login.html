@@ -23,7 +23,7 @@
 
     <form id="login-form" class="stack" novalidate>
       <h2>Anmelden</h2>
-      <label class="field">E-Mail-Adresse <input id="email" type="email" autocomplete="username" required></label>
+      <label class="field">Benutzername <input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
       <label class="field">Passwort <input id="password" type="password" autocomplete="current-password" required></label>
       <button type="submit" class="primary">Anmelden</button>
       <p class="hint">Passwort vergessen? Ein Admin erstellt dir einen neuen Link.</p>
@@ -31,7 +31,7 @@
 
     <form id="redeem-form" class="stack" novalidate hidden>
       <h2 id="redeem-title"></h2>
-      <p id="redeem-email" class="hint"></p>
+      <p id="redeem-username" class="hint"></p>
       <label class="field">Passwort (mindestens 10 Zeichen)
         <input id="new-password" type="password" autocomplete="new-password" required></label>
       <label class="field">Passwort wiederholen

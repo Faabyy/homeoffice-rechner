@@ -66,7 +66,7 @@ if ($validKey && $dbOk && $userCount === 0 && ($_SERVER['REQUEST_METHOD'] ?? '')
         if ((string) ($_POST['password'] ?? '') !== (string) ($_POST['password2'] ?? '')) {
             throw new UserError('Die beiden Passwörter stimmen nicht überein.');
         }
-        $userId = create_user((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''), true);
+        $userId = create_user((string) ($_POST['username'] ?? ''), (string) ($_POST['password'] ?? ''), true);
         start_session($userId);
         header('Location: ' . base_path());
         exit;
@@ -106,8 +106,8 @@ if ($validKey && $dbOk && $userCount === 0 && ($_SERVER['REQUEST_METHOD'] ?? '')
     <p class="form-error"><?= h($error) ?></p>
 <?php endif; ?>
     <form method="post" action="setup.php?key=<?= h($key) ?>" class="stack">
-      <label class="field">E-Mail-Adresse <input type="email" name="email" id="email" required autocomplete="username"
-        value="<?= h((string) ($_POST['email'] ?? '')) ?>"></label>
+      <label class="field">Benutzername <input type="text" name="username" id="username" required autocomplete="username"
+        autocapitalize="none" spellcheck="false" value="<?= h((string) ($_POST['username'] ?? '')) ?>"></label>
       <label class="field">Passwort (mindestens <?= MIN_PASSWORD_LENGTH ?> Zeichen)
         <input type="password" name="password" id="password" required autocomplete="new-password"></label>
       <label class="field">Passwort wiederholen

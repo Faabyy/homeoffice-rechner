@@ -63,7 +63,7 @@ function ensure_schema(PDO $pdo): void
         )$suffix"],
         'users' => ["CREATE TABLE users (
             id $autoId,
-            email VARCHAR(254) NOT NULL UNIQUE,         -- stored lowercase
+            email VARCHAR(254) NOT NULL UNIQUE,         -- the username (column name from when it was an e-mail address), stored lowercase
             password_hash VARCHAR(255) NOT NULL,
             is_admin INT NOT NULL DEFAULT 0,
             is_viewer INT NOT NULL DEFAULT 0,           -- read-only account without own data

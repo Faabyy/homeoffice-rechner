@@ -69,13 +69,13 @@ nutzlos).
 
 ## 4. Andere einladen
 
-Konten gibt es nur auf Einladung: Tab **Benutzer** → E-Mail-Adresse eingeben →
+Konten gibt es nur auf Einladung: Tab **Benutzer** → Benutzernamen eingeben (frei wählbar, 2–64 Zeichen: a–z, Ziffern, `. _ - @ +`; keine E-Mail-Adresse nötig) →
 **Einladungslink erstellen** → Link kopieren und der Person schicken (z. B. per Mail oder Chat). Der
 Link gilt 7 Tage und nur einmal; damit legt die Person ihr Passwort fest. Die App verschickt selbst
-keine E-Mails.
+keine E-Mails und braucht auch keine Adressen.
 
 **Konten verwalten:** In der Kontenliste (mit Suche und Filter) ein Konto anklicken. In der Detailansicht
-lassen sich die Rolle und die E-Mail-Adresse ändern, ein **Passwort-Link** erstellen (24 Stunden gültig,
+lassen sich die Rolle und der Benutzername ändern, ein **Passwort-Link** erstellen (24 Stunden gültig,
 z. B. bei vergessenem Passwort), das Konto **sperren** (sofort abgemeldet, Daten bleiben) oder **überall
 abmelden**, Lese-Freigaben setzen, die Daten des Kontos exportieren und es löschen. Alle diese Aktionen
 stehen im **Protokoll** unten im Tab. Wer Fragen hat, findet die Admins in der App unter

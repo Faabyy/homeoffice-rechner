@@ -9,6 +9,15 @@
 
 const CHANGELOG = [
   {
+    id: "2026-10-10-benutzername",
+    date: "2026-10-10",
+    title: "Anmelden mit Benutzername",
+    items: [
+      "Statt der E-Mail-Adresse gibt es jetzt einen Benutzernamen (2–64 Zeichen: Buchstaben ohne Umlaute, "
+        + "Ziffern und . _ - @ +). Deine bisherige Anmeldung funktioniert unverändert weiter.",
+    ],
+  },
+  {
     id: "2026-10-10-handy-ansicht",
     date: "2026-10-10",
     title: "Besser auf dem Handy",

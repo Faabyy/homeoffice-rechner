@@ -13,8 +13,8 @@ def post(path, data, form=False):
     except Exception:
         return {}
 
-post("setup.php?key=design-test-123456", f"email={EMAIL}&password={PASSWORD}&password2={PASSWORD}", form=True)
-post("api.php?action=login", {"email": EMAIL, "password": PASSWORD})
+post("setup.php?key=design-test-123456", f"username={EMAIL}&password={PASSWORD}&password2={PASSWORD}", form=True)
+post("api.php?action=login", {"username": EMAIL, "password": PASSWORD})
 post("api.php?action=settings", {"workdays": [0, 1, 2, 3, 4], "homeOfficeDays": [4], "officeDays": [], "schoolDays": [],
      "dailyMinutes": 468, "limitPercent": 30, "state": "NW", "defaultStart": "08:00", "defaultBreak": 30})
 for day, start, end, loc in [("2026-10-01", "07:45", "16:15", "buero"), ("2026-10-02", "08:00", "16:30", "homeoffice"),
@@ -25,5 +25,5 @@ for day, status in [("2026-10-07", "homeoffice"), ("2026-10-08", "buero"), ("202
     post("api.php?action=plan", {"day": day, "status": status})
 post("api.php?action=flex", {"day": "2026-09-30", "minutes": -20, "note": "Übertrag September"})
 for email, viewer in (("anna@example.org", False), ("chefin@example.org", True)):
-    post("api.php?action=admin-invite", {"email": email, "isViewer": viewer})
+    post("api.php?action=admin-invite", {"username": email, "isViewer": viewer})
 print("Demo-Daten angelegt.")

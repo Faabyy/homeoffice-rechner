@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Account management for admins: overview, roles, e-mail, locking, sessions, read access
+// Account management for admins: overview, roles, usernames, locking, sessions, read access
 // between accounts, export of an account's data, and the log of everything admins do.
 // Admins cannot change their own role, lock or delete themselves, so at least one
 // working admin always remains.
@@ -14,7 +14,7 @@ function admin_log(array $admin, string $action, ?array $target, string $details
 {
     db_exec('INSERT INTO admin_log (at, admin_id, admin_email, action, target_id, target_email, details)
              VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [time(), $admin['id'], $admin['email'], $action, $target ? (int) $target['id'] : null,
+        [time(), $admin['id'], $admin['username'], $action, $target ? (int) $target['id'] : null,
             $target ? $target['email'] : null, preg_replace('/^(.{500}).+$/us', '$1', $details)]);
 }
 
@@ -72,7 +72,7 @@ function admin_overview(): array
         return $user;
     }, db_rows('SELECT * FROM users ORDER BY email'));
     $links = array_map(function ($r) {
-        return ['id' => (int) $r['id'], 'kind' => $r['kind'], 'email' => $r['email'],
+        return ['id' => (int) $r['id'], 'kind' => $r['kind'], 'username' => $r['email'],
             'isAdmin' => (bool) $r['is_admin'], 'isViewer' => (bool) $r['is_viewer'],
             'expiresAt' => date('Y-m-d H:i', (int) $r['expires_at'])];
     }, db_rows('SELECT * FROM tokens WHERE expires_at > ? ORDER BY email', [time()]));
@@ -86,21 +86,21 @@ function admin_overview(): array
 
 // ---- links ------------------------------------------------------------------------------------
 
-function admin_invite(array $admin, string $email, bool $isAdmin, bool $isViewer): string
+function admin_invite(array $admin, string $username, bool $isAdmin, bool $isViewer): string
 {
-    $link = create_link('invite', $email, $isAdmin, $isViewer);
+    $link = create_link('invite', $username, $isAdmin, $isViewer);
     $role = $isViewer ? 'viewer' : ($isAdmin ? 'admin' : 'user');
-    admin_log($admin, 'invite', null, normalize_email($email) . ' als ' . ROLES[$role]);
+    admin_log($admin, 'invite', null, normalize_username($username) . ' als ' . ROLES[$role]);
     return $link;
 }
 
-function admin_reset_link(array $admin, string $email): string
+function admin_reset_link(array $admin, string $username): string
 {
-    $row = db_row('SELECT * FROM users WHERE email = ?', [strtolower(trim($email))]);
+    $row = db_row('SELECT * FROM users WHERE email = ?', [strtolower(trim($username))]);
     if ($row && $row['locked_at'] !== null) {
         throw new UserError('Das Konto ist gesperrt. Entsperre es zuerst.');
     }
-    $link = create_link('reset', $email);
+    $link = create_link('reset', $username);
     admin_log($admin, 'reset', $row);
     return $link;
 }
@@ -153,22 +153,22 @@ function admin_set_role(array $admin, int $id, $role): void
     admin_log($admin, 'role', $target, ROLES[$old] . ' → ' . ROLES[$role]);
 }
 
-function admin_set_email(array $admin, int $id, string $email): void
+function admin_set_username(array $admin, int $id, string $username): void
 {
     $target = admin_target($id);
-    $email = normalize_email($email);
-    if ($email === $target['email']) {
+    $username = normalize_username($username);
+    if ($username === $target['email']) {
         return;
     }
-    if (db_row('SELECT id FROM users WHERE email = ?', [$email])) {
-        throw new UserError('Für diese E-Mail-Adresse gibt es schon ein Konto.');
+    if (db_row('SELECT id FROM users WHERE email = ?', [$username])) {
+        throw new UserError('Diesen Benutzernamen gibt es schon.');
     }
-    tx(function () use ($id, $email, $target) {
-        db_exec('UPDATE users SET email = ? WHERE id = ?', [$email, $id]);
+    tx(function () use ($id, $username, $target) {
+        db_exec('UPDATE users SET email = ? WHERE id = ?', [$username, $id]);
         // an open password link keeps working for the renamed account
-        db_exec("UPDATE tokens SET email = ? WHERE email = ? AND kind = 'reset'", [$email, $target['email']]);
+        db_exec("UPDATE tokens SET email = ? WHERE email = ? AND kind = 'reset'", [$username, $target['email']]);
     });
-    admin_log($admin, 'email', ['id' => $id, 'email' => $email], $target['email'] . ' → ' . $email);
+    admin_log($admin, 'username', ['id' => $id, 'email' => $username], $target['email'] . ' → ' . $username);
 }
 
 function admin_set_locked(array $admin, int $id, $locked): void
@@ -224,7 +224,7 @@ function admin_export(array $admin, int $id): array
         throw new UserError('Ein Lese-Konto hat keine eigenen Daten.');
     }
     admin_log($admin, 'export', $target);
-    return ['email' => $target['email']] + load_user_data($id);
+    return ['username' => $target['email']] + load_user_data($id);
 }
 
 // ---- read access between accounts ------------------------------------------------------------
@@ -249,8 +249,8 @@ function account_ids($ids, bool $viewers, string $message): array
     return $result;
 }
 
-/** E-mails of accounts by id, for the log. */
-function emails_of(array $ids): string
+/** Usernames of accounts by id, for the log. */
+function usernames_of(array $ids): string
 {
     if (!$ids) {
         return 'niemand';
@@ -273,7 +273,7 @@ function set_viewer_access(array $admin, int $viewerId, $ownerIds): void
             db_exec('INSERT INTO viewer_access (viewer_id, owner_id) VALUES (?, ?)', [$viewerId, $id]);
         }
     });
-    admin_log($admin, 'access', $viewer, 'darf sehen: ' . emails_of($ids));
+    admin_log($admin, 'access', $viewer, 'darf sehen: ' . usernames_of($ids));
 }
 
 /** Replace the set of read-only accounts that may see an account. */
@@ -290,5 +290,5 @@ function set_owner_access(array $admin, int $ownerId, $viewerIds): void
             db_exec('INSERT INTO viewer_access (viewer_id, owner_id) VALUES (?, ?)', [$id, $ownerId]);
         }
     });
-    admin_log($admin, 'access', $owner, 'sichtbar für: ' . emails_of($ids));
+    admin_log($admin, 'access', $owner, 'sichtbar für: ' . usernames_of($ids));
 }

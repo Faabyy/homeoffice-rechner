@@ -9,7 +9,7 @@ Prüfung gegen eine monatliche Homeoffice-Grenze (Standard: höchstens 30 % der 
 - Feiertage je Bundesland, Schulferien zur Anzeige
 - Prognose für den Monat: wie viel Homeoffice noch möglich ist
 - Gleitzeitkonto mit manuellen Korrekturen
-- Mehrere Benutzer, Anmeldung mit E-Mail und Passwort, Konten nur per Einladungslink
+- Mehrere Benutzer, Anmeldung mit Benutzername und Passwort (keine E-Mail nötig), Konten nur per Einladungslink
 - Kontoverwaltung für Admins (Rollen, Sperren, Passwort-Links, Protokoll) und Lese-Konten, die
   freigegebene Daten anderer sehen
 - Optionale Zugriffssperre für normale Benutzer (bestimmte Netze, nur Handy)

@@ -24,7 +24,7 @@ class UiTest(unittest.TestCase):
 
     def login(self, email, password):
         self.browser.goto(self.server.base + "login.php")
-        self.js(f"document.getElementById('email').value = '{email}';"
+        self.js(f"document.getElementById('username').value = '{email}';"
                 f"document.getElementById('password').value = '{password}';"
                 "document.getElementById('login-form').requestSubmit()")
         self.browser.wait_for("location.pathname === '/' && !!document.querySelector('.day')")
@@ -35,12 +35,12 @@ class UiTest(unittest.TestCase):
         # wrong password, then login
         b.goto(self.server.base)
         self.assertTrue(b.wait_for("location.pathname === '/login.php'"))
-        self.js("document.getElementById('email').value = 'admin@example.org';"
+        self.js("document.getElementById('username').value = 'admin@example.org';"
                 "document.getElementById('password').value = 'falsch';"
                 "document.getElementById('login-form').requestSubmit()")
         self.assertIn("falsch", b.wait_for("document.getElementById('error').textContent"))
         self.login("admin@example.org", "geheim12345")
-        self.assertEqual(self.js("document.getElementById('user-email').textContent"), "admin@example.org")
+        self.assertEqual(self.js("document.getElementById('user-name').textContent"), "admin@example.org")
         self.assertFalse(self.js("document.querySelector('[data-tab=benutzer]').hidden"))
 
         # plan: show October 2026, click a day three times quickly -> Frei
@@ -155,7 +155,7 @@ class UiTest(unittest.TestCase):
         # invite someone, log out, use the link
         self.js("document.querySelector('[data-tab=benutzer]').click()")
         b.wait_for("typeof loadAdmin === 'function'")
-        self.js("document.getElementById('i-email').value = 'kollegin@example.org';"
+        self.js("document.getElementById('i-username').value = 'kollegin@example.org';"
                 "document.getElementById('invite-form').requestSubmit()")
         link = b.wait_for("!document.getElementById('link-box').hidden && document.querySelector('#link-box input').value")
         self.assertIn("login.php?token=", link)
@@ -164,13 +164,13 @@ class UiTest(unittest.TestCase):
         b.wait_for("location.pathname === '/login.php'")
 
         b.goto(link)
-        self.assertEqual(b.wait_for("document.getElementById('redeem-email').textContent"), "für kollegin@example.org")
+        self.assertEqual(b.wait_for("document.getElementById('redeem-username').textContent"), "für kollegin@example.org")
         self.assertNotIn("token", self.js("location.href"))
         self.js("document.getElementById('new-password').value = 'kollegin-pw-1';"
                 "document.getElementById('new-password2').value = 'kollegin-pw-1';"
                 "document.getElementById('redeem-form').requestSubmit()")
-        b.wait_for("location.pathname === '/' && document.getElementById('user-email').textContent")
-        self.assertEqual(self.js("document.getElementById('user-email').textContent"), "kollegin@example.org")
+        b.wait_for("location.pathname === '/' && document.getElementById('user-name').textContent")
+        self.assertEqual(self.js("document.getElementById('user-name').textContent"), "kollegin@example.org")
         self.assertTrue(self.js("document.querySelector('[data-tab=benutzer]').hidden"))
         self.js("state.year = 2026; state.month = 10; render()")
         self.assertNotIn("✓", self.js(f"{cell('Mo 05.10.2026')}.textContent"))  # admin's data not visible
@@ -299,9 +299,9 @@ class UiTest(unittest.TestCase):
     def test_account_management(self):
         b = self.browser
         admin = Client(self.server)
-        admin.api("login", {"email": "admin@example.org", "password": "geheim12345"})
+        admin.api("login", {"username": "admin@example.org", "password": "geheim12345"})
         for email in ("anna@example.org", "bernd@example.org"):
-            link = admin.api("admin-invite", {"email": email})[1]["link"]
+            link = admin.api("admin-invite", {"username": email})[1]["link"]
             Client(self.server).api("redeem", {"token": link.split("token=")[1], "password": "passwort-123"})
 
         self.login("admin@example.org", "geheim12345")
@@ -349,7 +349,7 @@ class UiTest(unittest.TestCase):
     def test_read_only_account(self):
         b = self.browser
         admin = Client(self.server)
-        admin.api("login", {"email": "admin@example.org", "password": "geheim12345"})
+        admin.api("login", {"username": "admin@example.org", "password": "geheim12345"})
         admin.api("entry", {"day": "2026-10-05", "start": "08:00", "end": "16:30", "break": 30, "location": "homeoffice"})
         admin.api("plan", {"day": "2026-10-06", "status": "buero"})
 
@@ -357,7 +357,7 @@ class UiTest(unittest.TestCase):
         self.login("admin@example.org", "geheim12345")
         self.js("document.querySelector('[data-tab=benutzer]').click()")
         b.wait_for("typeof loadAdmin === 'function'")
-        self.js("document.getElementById('i-email').value = 'leser@example.org';"
+        self.js("document.getElementById('i-username').value = 'leser@example.org';"
                 "document.getElementById('i-role').value = 'viewer';"
                 "document.getElementById('invite-form').requestSubmit()")
         link = b.wait_for("!document.getElementById('link-box').hidden && document.querySelector('#link-box input').value")
@@ -365,7 +365,7 @@ class UiTest(unittest.TestCase):
         self.js("document.getElementById('logout').click()")
         b.wait_for("location.pathname === '/login.php'")
         b.goto(link)
-        b.wait_for("document.getElementById('redeem-email').textContent")
+        b.wait_for("document.getElementById('redeem-username').textContent")
         self.js("document.getElementById('new-password').value = 'leser-pw-123';"
                 "document.getElementById('new-password2').value = 'leser-pw-123';"
                 "document.getElementById('redeem-form').requestSubmit()")

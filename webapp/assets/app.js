@@ -44,7 +44,7 @@ const state = {
   year: now.getFullYear(),
   month: now.getMonth() + 1,
   user: null,
-  account: { createdAt: null, admins: [] }, // from `me`: account creation date, admin e-mails
+  account: { createdAt: null, admins: [] }, // from `me`: account creation date, admin usernames
   data: null,           // {settings, entries, plan} of the logged-in user (read-only account: of the viewed one)
   readOnly: false,      // read-only account: no own data, only views accounts assigned by an admin
   days: [],             // Logic.monthDays of the displayed month
@@ -958,10 +958,9 @@ function setupDesign() {
 
 // ---- help & news ------------------------------------------------------------------------
 
-/** Admin e-mails as mailto links, separated by commas. */
+/** Admin usernames, separated by commas (as a list of nodes to spread into replaceChildren). */
 function adminLinks() {
-  return state.account.admins.flatMap((email, i) =>
-    [i ? ", " : null, el("a", { href: `mailto:${email}` }, email)]);
+  return [state.account.admins.join(", ")];
 }
 
 function renderHelp() {
@@ -1091,7 +1090,7 @@ async function init() {
     showAppError(error.message);
     return;
   }
-  $("user-email").textContent = state.user.email;
+  $("user-name").textContent = state.user.username;
   document.querySelector('[data-tab="benutzer"]').hidden = !state.user.isAdmin;
   fillSettingsForm();
   renderFlexList();
@@ -1109,7 +1108,7 @@ const OWNER_KEY = "ansicht-konto";
 async function initReadOnly() {
   state.readOnly = true;
   document.body.classList.add("read-only");
-  $("user-email").textContent = state.user.email;
+  $("user-name").textContent = state.user.username;
   document.querySelector('[data-tab="zeiterfassung"]').textContent = "Einträge";
   document.querySelector('[data-tab="einstellungen"]').textContent = "Konto";
   document.querySelector('[data-tab="benutzer"]').hidden = true;
@@ -1125,7 +1124,7 @@ async function initReadOnly() {
   let remembered = null;
   try { remembered = Number(localStorage.getItem(OWNER_KEY)); } catch { /* no storage */ }
   const select = $("owner-select");
-  select.replaceChildren(...accounts.map((a) => el("option", { value: String(a.id) }, a.email)));
+  select.replaceChildren(...accounts.map((a) => el("option", { value: String(a.id) }, a.username)));
   if (accounts.some((a) => a.id === remembered)) select.value = String(remembered);
   select.addEventListener("change", () => showAccount(Number(select.value)).catch((e) => showAppError(e.message)));
   $("owner-box").hidden = false;

@@ -77,7 +77,7 @@ function handle_api(string $method, string $action, array $body)
 {
     // ---- without login ----
     if ($method === 'POST' && $action === 'login') {
-        return ['user' => login(str_field($body, 'email'), str_field($body, 'password'))];
+        return ['user' => login(str_field($body, 'username'), str_field($body, 'password'))];
     }
     if ($method === 'GET' && $action === 'link') {
         $info = link_info((string) ($_GET['token'] ?? ''));
@@ -159,18 +159,18 @@ function handle_api(string $method, string $action, array $body)
             case 'GET admin-export':
                 return admin_export($user, $id);
             case 'POST admin-invite':
-                return ['link' => admin_invite($user, str_field($body, 'email'), ($body['isAdmin'] ?? false) === true,
+                return ['link' => admin_invite($user, str_field($body, 'username'), ($body['isAdmin'] ?? false) === true,
                     ($body['isViewer'] ?? false) === true)];
             case 'POST admin-reset':
-                return ['link' => admin_reset_link($user, str_field($body, 'email'))];
+                return ['link' => admin_reset_link($user, str_field($body, 'username'))];
             case 'POST admin-revoke':
                 admin_revoke_link($user, $id);
                 return ['ok' => true];
             case 'POST admin-role':
                 admin_set_role($user, $id, $body['role'] ?? null);
                 return ['ok' => true];
-            case 'POST admin-email':
-                admin_set_email($user, $id, str_field($body, 'email'));
+            case 'POST admin-username':
+                admin_set_username($user, $id, str_field($body, 'username'));
                 return ['ok' => true];
             case 'POST admin-lock':
                 admin_set_locked($user, $id, $body['locked'] ?? null);

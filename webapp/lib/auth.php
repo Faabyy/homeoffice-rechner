@@ -11,7 +11,7 @@ const INVITE_TTL = 7 * 24 * 3600;
 const RESET_TTL = 24 * 3600;
 const MIN_PASSWORD_LENGTH = 10;
 const FAIL_WINDOW = 15 * 60;
-const MAX_FAILS_PER_EMAIL = 5;
+const MAX_FAILS_PER_USERNAME = 5;
 const MAX_FAILS_PER_IP = 30;
 const LOCKED_MESSAGE = 'Dieses Konto ist gesperrt. Bitte wende dich an einen Admin.';
 
@@ -25,13 +25,14 @@ function token_hash(string $token): string
     return hash('sha256', $token);
 }
 
-function normalize_email(string $email): string
+/** Usernames are stored lowercase; no e-mail address is needed (but an existing one stays valid). */
+function normalize_username(string $username): string
 {
-    $email = strtolower(trim($email));
-    if (strlen($email) > 254 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-        throw new UserError('Bitte eine gültige E-Mail-Adresse eingeben.');
+    $username = strtolower(trim($username));
+    if (!preg_match('/^[a-z0-9._@+-]{2,64}$/', $username)) {
+        throw new UserError('Der Benutzername muss 2 bis 64 Zeichen lang sein und darf nur Buchstaben (ohne Umlaute), Ziffern und . _ - @ + enthalten.');
     }
-    return $email;
+    return $username;
 }
 
 function check_password_policy(string $password): void
@@ -95,7 +96,7 @@ function access_restriction(): ?string
 /** @param array<string,mixed> $row */
 function user_from_row(array $row): array
 {
-    return ['id' => (int) $row['id'], 'email' => $row['email'], 'isAdmin' => (bool) $row['is_admin'],
+    return ['id' => (int) $row['id'], 'username' => $row['email'], 'isAdmin' => (bool) $row['is_admin'],
         'isViewer' => (bool) $row['is_viewer']];
 }
 
@@ -165,22 +166,22 @@ function count_failures(string $key): int
     return (int) $row['n'];
 }
 
-function login(string $email, string $password): array
+function login(string $username, string $password): array
 {
-    $email = strtolower(trim($email));
-    $emailKey = 'e:' . $email;
+    $username = strtolower(trim($username));
+    $usernameKey = 'e:' . $username;
     $ipKey = 'i:' . client_ip();
     db_exec('DELETE FROM login_failures WHERE at <= ?', [time() - FAIL_WINDOW]);
-    if (count_failures($emailKey) >= MAX_FAILS_PER_EMAIL || count_failures($ipKey) >= MAX_FAILS_PER_IP) {
+    if (count_failures($usernameKey) >= MAX_FAILS_PER_USERNAME || count_failures($ipKey) >= MAX_FAILS_PER_IP) {
         throw new UserError('Zu viele fehlgeschlagene Anmeldungen. Bitte in 15 Minuten erneut versuchen.', 429);
     }
-    $row = db_row('SELECT * FROM users WHERE email = ?', [$email]);
-    // Verify against a dummy hash for unknown emails so both cases take the same time.
+    $row = db_row('SELECT * FROM users WHERE email = ?', [$username]);
+    // Verify against a dummy hash for unknown usernames so both cases take the same time.
     $hash = $row ? $row['password_hash'] : password_hash('unknown-user', PASSWORD_DEFAULT);
     if (!password_verify($password, $hash) || !$row) {
         $now = time();
-        db_exec('INSERT INTO login_failures (fail_key, at) VALUES (?, ?), (?, ?)', [$emailKey, $now, $ipKey, $now]);
-        throw new UserError('E-Mail-Adresse oder Passwort ist falsch.', 401);
+        db_exec('INSERT INTO login_failures (fail_key, at) VALUES (?, ?), (?, ?)', [$usernameKey, $now, $ipKey, $now]);
+        throw new UserError('Benutzername oder Passwort ist falsch.', 401);
     }
     if ($row['locked_at'] !== null) {
         throw new UserError(LOCKED_MESSAGE, 403); // only after the right password: says nothing to strangers
@@ -192,7 +193,7 @@ function login(string $email, string $password): array
     if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) {
         db_exec('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_DEFAULT), $row['id']]);
     }
-    db_exec('DELETE FROM login_failures WHERE fail_key = ?', [$emailKey]);
+    db_exec('DELETE FROM login_failures WHERE fail_key = ?', [$usernameKey]);
     start_session((int) $row['id']);
     return user_from_row($row);
 }
@@ -212,36 +213,36 @@ function change_password(array $user, string $current, string $new): void
 
 // ---- one-time links -------------------------------------------------------------------------
 
-function create_user(string $email, string $password, bool $isAdmin, bool $isViewer = false): int
+function create_user(string $username, string $password, bool $isAdmin, bool $isViewer = false): int
 {
-    $email = normalize_email($email);
+    $username = normalize_username($username);
     check_password_policy($password);
-    if (db_row('SELECT id FROM users WHERE email = ?', [$email])) {
-        throw new UserError('Für diese E-Mail-Adresse gibt es schon ein Konto.');
+    if (db_row('SELECT id FROM users WHERE email = ?', [$username])) {
+        throw new UserError('Diesen Benutzernamen gibt es schon.');
     }
     db_exec('INSERT INTO users (email, password_hash, is_admin, is_viewer, created_at) VALUES (?, ?, ?, ?, ?)',
-        [$email, password_hash($password, PASSWORD_DEFAULT), $isAdmin ? 1 : 0, $isViewer ? 1 : 0, time()]);
+        [$username, password_hash($password, PASSWORD_DEFAULT), $isAdmin ? 1 : 0, $isViewer ? 1 : 0, time()]);
     return (int) db()->lastInsertId();
 }
 
 /** Create an invitation or password-reset link and return its URL. */
-function create_link(string $kind, string $email, bool $isAdmin = false, bool $isViewer = false): string
+function create_link(string $kind, string $username, bool $isAdmin = false, bool $isViewer = false): string
 {
-    $email = normalize_email($email);
+    $username = normalize_username($username);
     if ($isAdmin && $isViewer) {
         throw new UserError('Ein Lese-Konto kann kein Admin sein.');
     }
-    $exists = db_row('SELECT id FROM users WHERE email = ?', [$email]) !== null;
+    $exists = db_row('SELECT id FROM users WHERE email = ?', [$username]) !== null;
     if ($kind === 'invite' && $exists) {
-        throw new UserError('Für diese E-Mail-Adresse gibt es schon ein Konto.');
+        throw new UserError('Diesen Benutzernamen gibt es schon.');
     }
     if ($kind === 'reset' && !$exists) {
         throw new UserError('Dieses Konto gibt es nicht.');
     }
     $token = new_token();
-    db_exec('DELETE FROM tokens WHERE email = ? AND kind = ?', [$email, $kind]);
+    db_exec('DELETE FROM tokens WHERE email = ? AND kind = ?', [$username, $kind]);
     db_exec('INSERT INTO tokens (token_hash, kind, email, is_admin, is_viewer, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [token_hash($token), $kind, $email, $isAdmin ? 1 : 0, $isViewer ? 1 : 0,
+        [token_hash($token), $kind, $username, $isAdmin ? 1 : 0, $isViewer ? 1 : 0,
             time() + ($kind === 'invite' ? INVITE_TTL : RESET_TTL)]);
     return base_url() . 'login.php?token=' . $token;
 }
@@ -249,7 +250,7 @@ function create_link(string $kind, string $email, bool $isAdmin = false, bool $i
 function link_info(string $token): ?array
 {
     $row = db_row('SELECT * FROM tokens WHERE token_hash = ? AND expires_at > ?', [token_hash($token), time()]);
-    return $row ? ['kind' => $row['kind'], 'email' => $row['email']] : null;
+    return $row ? ['kind' => $row['kind'], 'username' => $row['email']] : null;
 }
 
 /** Use an invitation (creates the account) or reset link (sets a new password), then log in. */
@@ -299,11 +300,11 @@ function account_info(int $userId): array
 
 // ---- read-only accounts -------------------------------------------------------------------------
 
-/** Accounts a read-only account may see, as [{id, email}]. */
+/** Accounts a read-only account may see, as [{id, username}]. */
 function viewable_accounts(int $viewerId): array
 {
     return array_map(function ($r) {
-        return ['id' => (int) $r['id'], 'email' => $r['email']];
+        return ['id' => (int) $r['id'], 'username' => $r['email']];
     }, db_rows('SELECT u.id, u.email FROM viewer_access a JOIN users u ON u.id = a.owner_id
                 WHERE a.viewer_id = ? ORDER BY u.email', [$viewerId]));
 }
@@ -313,7 +314,7 @@ function can_view(int $viewerId, int $ownerId): bool
     return db_row('SELECT 1 AS ok FROM viewer_access WHERE viewer_id = ? AND owner_id = ?', [$viewerId, $ownerId]) !== null;
 }
 
-/** E-mail addresses of the read-only accounts that may see this account (shown to its owner). */
+/** Usernames of the read-only accounts that may see this account (shown to its owner). */
 function viewers_of(int $ownerId): array
 {
     return array_column(db_rows('SELECT u.email FROM viewer_access a JOIN users u ON u.id = a.viewer_id

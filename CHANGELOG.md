@@ -7,6 +7,19 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-10 – Benutzername statt E-Mail-Adresse
+
+Upload-Ordner: `update-benutzername/`
+
+- Anmeldung, Einladung, Passwort-Link und Kontoverwaltung nutzen einen Benutzernamen: kleingeschrieben, 2–64
+  Zeichen aus `a-z 0-9 . _ - @ +` (`normalize_username()` in `lib/auth.php`). Bestehende E-Mail-Adressen
+  bleiben gültig, es ist keine Datenmigration nötig.
+- API/JSON: Feld `email` → `username` (auch in `me`, `shared`, `admin-overview`, `admin-export`), Aktion
+  `admin-email` → `admin-username`. Der Admin-Log kennt die Aktion `username`; alte Einträge `email` bleiben lesbar.
+- Datenbankspalten (`users.email`, `tokens.email`, `admin_log.*_email`) heißen bewusst weiter so, um keine
+  Migration auf dem Webspace zu riskieren.
+- Hilfe: die Admin-Kontakte sind keine `mailto:`-Links mehr.
+
 ## 2026-10-10 – Performance und Aufräumen (Code-Review)
 
 Upload-Ordner: `update-performance/` (enthält auch die geänderte `.htaccess` – lässt sich diese nicht

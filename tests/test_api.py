@@ -19,7 +19,7 @@ class ApiTest(unittest.TestCase):
         self.server.close()
 
     def invite_user(self, email="kollegin@example.org", password="kollegin-pw-1"):
-        status, res = self.admin.api("admin-invite", {"email": email})
+        status, res = self.admin.api("admin-invite", {"username": email})
         self.assertEqual(status, 200, res)
         token = res["link"].split("token=")[1]
         user = Client(self.server)
@@ -42,9 +42,9 @@ class ApiTest(unittest.TestCase):
         client = Client(self.server)
         status, headers, _ = client.request("GET", "")
         self.assertEqual((status, headers["Location"]), (302, "/login.php"))
-        self.assertEqual(client.api("login", {"email": "ADMIN@example.org", "password": "falsch"})[0], 401)
-        status, res = client.api("login", {"email": "ADMIN@example.org", "password": "geheim12345"})
-        self.assertEqual((status, res["user"]["email"], res["user"]["isAdmin"]), (200, "admin@example.org", True))
+        self.assertEqual(client.api("login", {"username": "ADMIN@example.org", "password": "falsch"})[0], 401)
+        status, res = client.api("login", {"username": "ADMIN@example.org", "password": "geheim12345"})
+        self.assertEqual((status, res["user"]["username"], res["user"]["isAdmin"]), (200, "admin@example.org", True))
         status, headers, body = client.request("GET", "")
         self.assertEqual(status, 200)
         self.assertIn("default-src 'self'", headers["Content-Security-Policy"])
@@ -57,8 +57,8 @@ class ApiTest(unittest.TestCase):
     def test_login_rate_limit(self):
         client = Client(self.server)
         for _ in range(5):
-            self.assertEqual(client.api("login", {"email": "admin@example.org", "password": "falsch"})[0], 401)
-        status, res = client.api("login", {"email": "admin@example.org", "password": "geheim12345"})
+            self.assertEqual(client.api("login", {"username": "admin@example.org", "password": "falsch"})[0], 401)
+        status, res = client.api("login", {"username": "admin@example.org", "password": "geheim12345"})
         self.assertEqual(status, 429)
         self.assertIn("15 Minuten", res["error"])
 
@@ -142,7 +142,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(len(self.admin.api("data")[1]["entries"]), 1)
         # no admin functions
         self.assertEqual(user.api("admin-overview")[0], 403)
-        self.assertEqual(user.api("admin-invite", {"email": "x@example.org"})[0], 403)
+        self.assertEqual(user.api("admin-invite", {"username": "x@example.org"})[0], 403)
 
     def test_import_replaces_data(self):
         self.admin.api("entry", ENTRY)
@@ -233,26 +233,26 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(user.api("me")[1]["user"]["isAdmin"], False)
         # links work only once
         self.assertEqual(Client(self.server).api("redeem", {"token": token, "password": "irgendwas-123"})[0], 400)
-        self.assertEqual(self.admin.api("admin-invite", {"email": "Kollegin@example.org"})[0], 400)
-        self.assertEqual(self.admin.api("admin-invite", {"email": "keine-adresse"})[0], 400)
+        self.assertEqual(self.admin.api("admin-invite", {"username": "Kollegin@example.org"})[0], 400)
+        self.assertEqual(self.admin.api("admin-invite", {"username": "zu kurz und mit Leerzeichen!"})[0], 400)
 
-        status, res = self.admin.api("admin-reset", {"email": "kollegin@example.org"})
+        status, res = self.admin.api("admin-reset", {"username": "kollegin@example.org"})
         reset_token = res["link"].split("token=")[1]
         self.assertEqual(Client(self.server).api(f"link&token={reset_token}")[1]["kind"], "reset")
         fresh = Client(self.server)
         self.assertEqual(fresh.api("redeem", {"token": reset_token, "password": "kurz"})[0], 400)
         self.assertEqual(fresh.api("redeem", {"token": reset_token, "password": "neues-passwort-1"})[0], 200)
         self.assertEqual(user.api("me")[0], 401)  # old sessions ended
-        self.assertEqual(Client(self.server).api("login", {"email": "kollegin@example.org",
+        self.assertEqual(Client(self.server).api("login", {"username": "kollegin@example.org",
                                                            "password": "neues-passwort-1"})[0], 200)
 
     def test_admin_overview_revoke_delete(self):
         user, _ = self.invite_user()
         user.api("entry", ENTRY)
-        self.admin.api("admin-invite", {"email": "offen@example.org", "isAdmin": True})
+        self.admin.api("admin-invite", {"username": "offen@example.org", "isAdmin": True})
         _, overview = self.admin.api("admin-overview")
-        self.assertEqual([u["email"] for u in overview["users"]], ["admin@example.org", "kollegin@example.org"])
-        self.assertEqual([(l["email"], l["isAdmin"]) for l in overview["links"]], [("offen@example.org", True)])
+        self.assertEqual([u["username"] for u in overview["users"]], ["admin@example.org", "kollegin@example.org"])
+        self.assertEqual([(l["username"], l["isAdmin"]) for l in overview["links"]], [("offen@example.org", True)])
         self.admin.api("admin-revoke", {"id": overview["links"][0]["id"]})
         self.assertEqual(self.admin.api("admin-overview")[1]["links"], [])
 
@@ -268,10 +268,10 @@ class ApiTest(unittest.TestCase):
         self.admin.api("entry", ENTRY)
         colleague, _ = self.invite_user()
         colleague.api("entry", {**ENTRY, "location": "buero"})
-        self.assertEqual(self.admin.api("admin-invite", {"email": "x@example.org", "isAdmin": True, "isViewer": True})[0], 400)
-        status, res = self.admin.api("admin-invite", {"email": "leser@example.org", "isViewer": True})
+        self.assertEqual(self.admin.api("admin-invite", {"username": "x@example.org", "isAdmin": True, "isViewer": True})[0], 400)
+        status, res = self.admin.api("admin-invite", {"username": "leser@example.org", "isViewer": True})
         self.assertEqual(status, 200, res)
-        self.assertEqual([(l["email"], l["isViewer"]) for l in self.admin.api("admin-overview")[1]["links"]],
+        self.assertEqual([(l["username"], l["isViewer"]) for l in self.admin.api("admin-overview")[1]["links"]],
                          [("leser@example.org", True)])
         viewer = Client(self.server)
         self.assertEqual(viewer.api("redeem", {"token": res["link"].split("token=")[1], "password": "leser-pw-123"})[0], 200)
@@ -282,7 +282,7 @@ class ApiTest(unittest.TestCase):
         # nothing assigned yet; no own data, no writes, no admin functions
         self.assertEqual(viewer.api("shared"), (200, {"accounts": []}))
         _, overview = self.admin.api("admin-overview")
-        ids = {u["email"]: u["id"] for u in overview["users"]}
+        ids = {u["username"]: u["id"] for u in overview["users"]}
         self.assertEqual(viewer.api(f"shared-data&owner={ids['admin@example.org']}")[0], 403)
         for action, body in [("data", None), ("entry", ENTRY), ("plan", {"day": "2026-10-05", "status": "frei"}),
                              ("settings", {}), ("import", {}), ("flex", {}), ("admin-overview", None)]:
@@ -297,7 +297,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(self.admin.api("admin-viewer-access", {"id": leser, "canView": [ids["admin@example.org"]]})[0], 200)
         self.assertEqual([u.get("canView") for u in self.admin.api("admin-overview")[1]["users"]],
                          [None, None, [ids["admin@example.org"]]])
-        self.assertEqual(viewer.api("shared")[1]["accounts"], [{"id": ids["admin@example.org"], "email": "admin@example.org"}])
+        self.assertEqual(viewer.api("shared")[1]["accounts"], [{"id": ids["admin@example.org"], "username": "admin@example.org"}])
         status, data = viewer.api(f"shared-data&owner={ids['admin@example.org']}")
         self.assertEqual((status, [e["location"] for e in data["entries"]]), (200, ["homeoffice"]))
         self.assertNotIn("viewers", data)
@@ -315,13 +315,24 @@ class ApiTest(unittest.TestCase):
     # -- account management --
 
     def ids(self):
-        return {u["email"]: u["id"] for u in self.admin.api("admin-overview")[1]["users"]}
+        return {u["username"]: u["id"] for u in self.admin.api("admin-overview")[1]["users"]}
 
-    def test_account_roles_and_email(self):
+    def test_usernames_need_no_at_sign(self):
+        for good in ("anna", "Max.Muster", "a_b-c+1", "ab"):
+            self.assertEqual(self.admin.api("admin-invite", {"username": good})[0], 200, good)
+        for bad in ("a", "x" * 65, "mit leer", "über", "a/b", ""):
+            self.assertEqual(self.admin.api("admin-invite", {"username": bad})[0], 400, bad)
+        user, _ = self.invite_user("Anna2", "anna-pw-12345")
+        self.assertEqual(user.api("me")[1]["user"]["username"], "anna2")
+        status, res = Client(self.server).api("login", {"username": "ANNA2", "password": "anna-pw-12345"})
+        self.assertEqual((status, res["user"]["username"]), (200, "anna2"))
+        self.assertIn("Benutzername", Client(self.server).api("login", {"username": "anna2", "password": "x"})[1]["error"])
+
+    def test_account_roles_and_username(self):
         colleague, _ = self.invite_user()
         ids = self.ids()
         me, kollegin = ids["admin@example.org"], ids["kollegin@example.org"]
-        for action, body in [("admin-role", {"id": me, "role": "admin"}), ("admin-email", {"id": me, "email": "x@example.org"}),
+        for action, body in [("admin-role", {"id": me, "role": "admin"}), ("admin-username", {"id": me, "username": "x@example.org"}),
                              ("admin-lock", {"id": me, "locked": True}), ("admin-logout", {"id": me}),
                              ("admin-owner-access", {"id": me, "viewers": []})]:
             self.assertEqual(colleague.api(action, body)[0], 403, action)  # admins only
@@ -342,17 +353,17 @@ class ApiTest(unittest.TestCase):
         self.assertIn("1 Einträge", res["error"])
         self.assertEqual(self.admin.api("admin-role", {"id": 9999, "role": "user"})[0], 404)
 
-        # e-mail: valid, unique, then login with the new one
-        self.assertEqual(self.admin.api("admin-email", {"id": kollegin, "email": "kaputt"})[0], 400)
-        self.assertEqual(self.admin.api("admin-email", {"id": kollegin, "email": "admin@example.org"})[0], 400)
-        self.assertEqual(self.admin.api("admin-email", {"id": kollegin, "email": " Neu@Example.org "})[0], 200)
-        self.assertEqual(Client(self.server).api("login", {"email": "neu@example.org", "password": "kollegin-pw-1"})[0], 200)
-        self.assertEqual(Client(self.server).api("login", {"email": "kollegin@example.org", "password": "kollegin-pw-1"})[0], 401)
+        # username: valid, unique, then login with the new one
+        self.assertEqual(self.admin.api("admin-username", {"id": kollegin, "username": "kaputt!"})[0], 400)
+        self.assertEqual(self.admin.api("admin-username", {"id": kollegin, "username": "admin@example.org"})[0], 400)
+        self.assertEqual(self.admin.api("admin-username", {"id": kollegin, "username": " Neu@Example.org "})[0], 200)
+        self.assertEqual(Client(self.server).api("login", {"username": "neu@example.org", "password": "kollegin-pw-1"})[0], 200)
+        self.assertEqual(Client(self.server).api("login", {"username": "kollegin@example.org", "password": "kollegin-pw-1"})[0], 401)
 
         # everything is in the log, newest first
         log = self.admin.api("admin-overview")[1]["log"]
         self.assertEqual([(e["action"], e["target"], e["details"]) for e in log[:4]], [
-            ("email", "neu@example.org", "kollegin@example.org → neu@example.org"),
+            ("username", "neu@example.org", "kollegin@example.org → neu@example.org"),
             ("role", "kollegin@example.org", "Admin → Nutzer"),
             ("role", "kollegin@example.org", "Nutzer → Admin"),
             ("invite", None, "kollegin@example.org als Nutzer")])
@@ -361,34 +372,34 @@ class ApiTest(unittest.TestCase):
     def test_lock_and_logout_everywhere(self):
         colleague, _ = self.invite_user()
         second = Client(self.server)
-        second.api("login", {"email": "kollegin@example.org", "password": "kollegin-pw-1"})
+        second.api("login", {"username": "kollegin@example.org", "password": "kollegin-pw-1"})
         kollegin = self.ids()["kollegin@example.org"]
         overview = self.admin.api("admin-overview")[1]
         self.assertEqual([(u["sessions"], u["lockedAt"]) for u in overview["users"]], [(1, None), (2, None)])
 
         self.assertEqual(self.admin.api("admin-logout", {"id": kollegin}), (200, {"count": 2}))
         self.assertEqual(colleague.api("me")[0], 401)
-        self.assertEqual(colleague.api("login", {"email": "kollegin@example.org", "password": "kollegin-pw-1"})[0], 200)
+        self.assertEqual(colleague.api("login", {"username": "kollegin@example.org", "password": "kollegin-pw-1"})[0], 200)
 
         # locked: logged out, cannot log in (the message only with the right password), no reset link
         self.assertEqual(self.admin.api("admin-lock", {"id": kollegin, "locked": "ja"})[0], 400)
-        self.admin.api("admin-reset", {"email": "kollegin@example.org"})
+        self.admin.api("admin-reset", {"username": "kollegin@example.org"})
         self.assertEqual(len(self.admin.api("admin-overview")[1]["links"]), 1)
         self.assertEqual(self.admin.api("admin-lock", {"id": kollegin, "locked": True})[0], 200)
         self.assertEqual(colleague.api("me")[0], 401)
         self.assertEqual(self.admin.api("admin-overview")[1]["links"], [])  # open reset link removed
-        status, res = colleague.api("login", {"email": "kollegin@example.org", "password": "kollegin-pw-1"})
+        status, res = colleague.api("login", {"username": "kollegin@example.org", "password": "kollegin-pw-1"})
         self.assertEqual(status, 403)
         self.assertIn("gesperrt", res["error"])
-        self.assertEqual(colleague.api("login", {"email": "kollegin@example.org", "password": "falsch-falsch"})[0], 401)
-        self.assertIn("gesperrt", self.admin.api("admin-reset", {"email": "kollegin@example.org"})[1]["error"])
+        self.assertEqual(colleague.api("login", {"username": "kollegin@example.org", "password": "falsch-falsch"})[0], 401)
+        self.assertIn("gesperrt", self.admin.api("admin-reset", {"username": "kollegin@example.org"})[1]["error"])
         self.assertIsNotNone(self.admin.api("admin-overview")[1]["users"][1]["lockedAt"])
         # a locked admin is not offered as contact
         self.admin.api("admin-role", {"id": kollegin, "role": "admin"})
         self.assertEqual(self.admin.api("me")[1]["admins"], ["admin@example.org"])
 
         self.assertEqual(self.admin.api("admin-lock", {"id": kollegin, "locked": False})[0], 200)
-        self.assertEqual(colleague.api("login", {"email": "kollegin@example.org", "password": "kollegin-pw-1"})[0], 200)
+        self.assertEqual(colleague.api("login", {"username": "kollegin@example.org", "password": "kollegin-pw-1"})[0], 200)
         self.assertEqual([e["action"] for e in self.admin.api("admin-overview")[1]["log"][:5]],
                          ["unlock", "role", "lock", "reset", "logout"])
 
@@ -397,7 +408,7 @@ class ApiTest(unittest.TestCase):
         self.admin.api("flex", {"day": "2026-09-30", "minutes": -20, "note": "Übertrag"})
         colleague, _ = self.invite_user()
         viewer = Client(self.server)
-        status, res = self.admin.api("admin-invite", {"email": "leser2@example.org", "isViewer": True})
+        status, res = self.admin.api("admin-invite", {"username": "leser2@example.org", "isViewer": True})
         viewer.api("redeem", {"token": res["link"].split("token=")[1], "password": "leser-pw-123"})
         ids = self.ids()
         me, leser2 = ids["admin@example.org"], ids["leser2@example.org"]
@@ -406,8 +417,8 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(self.admin.api("admin-owner-access", {"id": me, "viewers": [ids["kollegin@example.org"]]})[0], 400)
         self.assertEqual(self.admin.api("admin-owner-access", {"id": leser2, "viewers": []})[0], 400)
         self.assertEqual(self.admin.api("admin-owner-access", {"id": me, "viewers": [leser2]})[0], 200)
-        self.assertEqual(viewer.api("shared")[1]["accounts"], [{"id": me, "email": "admin@example.org"}])
-        users = {u["email"]: u for u in self.admin.api("admin-overview")[1]["users"]}
+        self.assertEqual(viewer.api("shared")[1]["accounts"], [{"id": me, "username": "admin@example.org"}])
+        users = {u["username"]: u for u in self.admin.api("admin-overview")[1]["users"]}
         self.assertEqual((users["admin@example.org"]["viewedBy"], users["leser2@example.org"]["canView"]), ([leser2], [me]))
         self.assertEqual(self.admin.api("admin-overview")[1]["log"][0]["details"], "sichtbar für: leser2@example.org")
 
@@ -418,7 +429,7 @@ class ApiTest(unittest.TestCase):
 
         # export of another account's data, in the format of the own export
         status, data = self.admin.api(f"admin-export&id={ids['kollegin@example.org']}")
-        self.assertEqual((status, data["email"], data["entries"]), (200, "kollegin@example.org", []))
+        self.assertEqual((status, data["username"], data["entries"]), (200, "kollegin@example.org", []))
         status, data = self.admin.api(f"admin-export&id={me}")
         self.assertEqual(([e["day"] for e in data["entries"]], [f["minutes"] for f in data["flex"]]), (["2026-10-05"], [-20]))
         self.assertEqual(self.admin.api("admin-overview")[1]["log"][0]["action"], "export")
@@ -439,7 +450,7 @@ class ApiTest(unittest.TestCase):
         status, res = self.admin.api("me")
         self.assertEqual((status, res["user"]["isViewer"]), (200, False))
         self.assertEqual(len(self.admin.api("data")[1]["entries"]), 1)
-        self.assertEqual(self.admin.api("admin-invite", {"email": "leser@example.org", "isViewer": True})[0], 200)
+        self.assertEqual(self.admin.api("admin-invite", {"username": "leser@example.org", "isViewer": True})[0], 200)
 
     # -- automatic backups --
 
@@ -484,7 +495,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(self.admin.api("password", {"current": "geheim12345", "new": "neues-passwort-1"})[0], 200)
         self.assertEqual(self.admin.api("me")[0], 200)  # this session stays logged in
-        self.assertEqual(Client(self.server).api("login", {"email": "admin@example.org",
+        self.assertEqual(Client(self.server).api("login", {"username": "admin@example.org",
                                                            "password": "neues-passwort-1"})[0], 200)
 
 

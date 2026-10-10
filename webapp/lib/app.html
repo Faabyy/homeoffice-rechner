@@ -29,7 +29,7 @@
     </div>
     <div class="account">
       <label id="owner-box" class="owner-box" hidden>Ansicht von <select id="owner-select"></select></label>
-      <span id="user-email"></span>
+      <span id="user-name"></span>
       <button type="button" id="news-btn" class="link">Neuigkeiten</button>
       <button type="button" id="logout" class="link">Abmelden</button>
     </div>
@@ -204,7 +204,7 @@
         <form id="invite-form" class="settings" novalidate>
           <h3>Person einladen</h3>
           <div class="form-row">
-            <label class="field">E-Mail-Adresse <input id="i-email" type="email" class="w-email"></label>
+            <label class="field">Benutzername <input id="i-username" type="text" class="w-email" autocapitalize="none" spellcheck="false"></label>
             <label class="field">Rolle
               <select id="i-role">
                 <option value="user">Nutzer</option>
@@ -220,7 +220,7 @@
 
         <h3 class="section">Konten</h3>
         <div class="toolbar">
-          <input id="u-search" type="search" class="w-email" placeholder="E-Mail suchen …" aria-label="Konten durchsuchen">
+          <input id="u-search" type="search" class="w-email" placeholder="Benutzername suchen …" aria-label="Konten durchsuchen">
           <select id="u-filter" aria-label="Konten filtern">
             <option value="">Alle Konten</option>
             <option value="admin">Admins</option>
@@ -232,7 +232,7 @@
         </div>
         <div class="table-card">
           <table class="entries accounts">
-            <thead><tr><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Freigaben</th><th>Seit</th><th></th></tr></thead>
+            <thead><tr><th>Benutzername</th><th>Rolle</th><th>Status</th><th>Freigaben</th><th>Seit</th><th></th></tr></thead>
             <tbody id="users-body"></tbody>
           </table>
           <p id="no-users" class="empty" hidden>Keine passenden Konten.</p>
@@ -241,7 +241,7 @@
         <h3 class="section">Offene Links</h3>
         <div class="table-card">
           <table class="entries">
-            <thead><tr><th>E-Mail</th><th>Art</th><th>Gültig bis</th><th></th></tr></thead>
+            <thead><tr><th>Benutzername</th><th>Art</th><th>Gültig bis</th><th></th></tr></thead>
             <tbody id="links-body"></tbody>
           </table>
           <p id="no-links" class="empty" hidden>Keine offenen Einladungen oder Passwort-Links.</p>
