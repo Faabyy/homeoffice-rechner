@@ -34,7 +34,7 @@ function db_driver(): string
 
 // Raise this whenever the schema changes below (new table, new column): databases with a lower
 // version run the migration once and are then marked as current.
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function schema_version(PDO $pdo): int
 {
@@ -144,6 +144,12 @@ function ensure_schema(PDO $pdo): void
         ['tokens', 'is_viewer', 'INT NOT NULL DEFAULT 0'],
         ['users', 'locked_at', 'INT NULL'],
     ];
+    // indexes added after the first release: [name, table, columns]
+    $indexes = [
+        ['sessions_expires', 'sessions', 'expires_at'],   // clean-up of expired sessions at login
+        ['sessions_user', 'sessions', 'user_id'],         // logging a user out everywhere, deleting users
+        ['login_failures_at', 'login_failures', 'at'],    // clean-up of old failures
+    ];
     foreach ($tables as $table => $statements) {
         if (!table_exists($pdo, $table)) {
             foreach ($statements as $sql) {
@@ -154,6 +160,13 @@ function ensure_schema(PDO $pdo): void
     foreach ($columns as [$table, $column, $definition]) {
         if (!column_exists($pdo, $table, $column)) {
             $pdo->exec("ALTER TABLE $table ADD COLUMN $column $definition");
+        }
+    }
+    foreach ($indexes as [$name, $table, $columns]) {
+        try {
+            $pdo->exec("CREATE INDEX $name ON $table ($columns)");
+        } catch (PDOException $e) {
+            // exists already (MySQL has no CREATE INDEX IF NOT EXISTS)
         }
     }
     $pdo->exec("DELETE FROM schema_meta WHERE k = 'version'");

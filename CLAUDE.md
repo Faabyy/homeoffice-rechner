@@ -51,7 +51,7 @@ Every day with logged entries has the daily target (`settings.dailyMinutes`) as 
 
 ## Database migrations
 
-`ensure_schema()` in `lib/db.php` compares `SCHEMA_VERSION` with the version stored in table `schema_meta` (a database from before that table existed counts as version 0). While the stored version is lower it creates each missing table (with its indexes), adds missing columns and then stores the new version; existing tables and data are never touched. Any schema change — new table (append to `$tables`), new column (into the `CREATE TABLE` statement and into `$columns`, added via `ALTER TABLE … ADD COLUMN`) — therefore needs `SCHEMA_VERSION` raised by one. Changing existing columns needs explicit migration code. The owner's server database already holds real data.
+`ensure_schema()` in `lib/db.php` compares `SCHEMA_VERSION` with the version stored in table `schema_meta` (a database from before that table existed counts as version 0). While the stored version is lower it creates each missing table (with its indexes), adds missing columns and then stores the new version; also creates the indexes listed in `$indexes` (errors for existing ones are ignored); existing tables and data are never touched. Any schema change — new table (append to `$tables`), new column (into the `CREATE TABLE` statement and into `$columns`, added via `ALTER TABLE … ADD COLUMN`) — therefore needs `SCHEMA_VERSION` raised by one. Changing existing columns needs explicit migration code. The owner's server database already holds real data.
 
 ## Forecast rules (logic.js)
 

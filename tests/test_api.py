@@ -221,7 +221,9 @@ class ApiTest(unittest.TestCase):
         self.assertEqual((status, len(data["entries"]), data["flex"]), (200, 1, []))
         self.assertEqual(self.admin.api("flex", {"day": "2026-09-30", "minutes": -20, "note": ""})[0], 200)
         conn = sqlite3.connect(db)
-        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 1)
+        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 2)
+        names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'index'")}
+        self.assertLessEqual({"sessions_expires", "sessions_user", "login_failures_at"}, names)
         conn.close()
 
     # -- invitations & administration --
