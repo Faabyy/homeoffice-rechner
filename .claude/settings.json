@@ -32,6 +32,7 @@
     "savvy-flow@claude-kit": true,
     "savvy-progress@claude-kit": true,
     "filetree@claude-code-filetree": true,
-    "catch-me-up@catch-me-up": true
+    "catch-me-up@catch-me-up": true,
+    "next-steps-cards@claude-mods": true
   }
 }
