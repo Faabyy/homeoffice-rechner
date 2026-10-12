@@ -1,0 +1,37 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-mods": {
+      "source": {
+        "source": "github",
+        "repo": "Faabyy/claude-mods"
+      }
+    },
+    "claude-kit": {
+      "source": {
+        "source": "github",
+        "repo": "JohnnyVizz/claude-kit"
+      }
+    },
+    "claude-code-filetree": {
+      "source": {
+        "source": "github",
+        "repo": "data-goblin/claude-code-filetree"
+      }
+    },
+    "catch-me-up": {
+      "source": {
+        "source": "github",
+        "repo": "oliverow/catch-me-up"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "usage-bar-de@claude-mods": true,
+    "cache-tax@claude-mods": true,
+    "cache-weather-bar@claude-mods": true,
+    "savvy-flow@claude-kit": true,
+    "savvy-progress@claude-kit": true,
+    "filetree@claude-code-filetree": true,
+    "catch-me-up@catch-me-up": true
+  }
+}
