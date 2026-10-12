@@ -7,6 +7,14 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-12 – Gesperrtes Netz: keine Anmeldeseite
+
+Upload-Ordner: `update-netzsperre-login/`
+
+- `auth.php`: neue Funktion `in_blocked_network()` und Konstante `BLOCKED_NETWORK_MESSAGE` (aus `access_restriction()`
+  herausgelöst). `login.php` antwortet aus einem Netz in `blocked_networks` mit 403 und nur dem Hinweistext, auch bei
+  `?token=`. `mobile_only` ändert nichts: PCs sehen die Anmeldeseite weiterhin. Test in `test_access.py`.
+
 ## 2026-10-12 – 5 Minuten pro Tag geschenkt
 
 Upload-Ordner: `update-geschenkte-minuten/`

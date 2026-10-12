@@ -42,6 +42,17 @@ class AccessRestrictionTest(unittest.TestCase):
         self.assertEqual(status, 403)
         self.assertIn("aus diesem Netzwerk nicht nutzbar", res["error"])
 
+    def test_blocked_network_gets_no_login_page_but_laptops_do(self):
+        self.start("['blocked_networks' => ['127.0.0.0/8']]")
+        status, _, body = Client(self.server).request("GET", "login.php", headers={"User-Agent": LAPTOP})
+        self.assertEqual(status, 403)
+        self.assertIn("aus diesem Netzwerk nicht nutzbar", body.decode())
+        self.assertEqual(Client(self.server).request("GET", "login.php?token=x", headers={"User-Agent": PHONE})[0], 403)
+        self.server.close()
+        self.start("['blocked_networks' => ['10.0.0.0/8'], 'mobile_only' => true]")
+        status, _, _ = Client(self.server).request("GET", "login.php", headers={"User-Agent": LAPTOP})
+        self.assertEqual(status, 200)  # mobile_only still shows the page; only the login itself is refused
+
     def test_network_outside_the_list_is_allowed(self):
         token = self.start("['blocked_networks' => ['127.0.0.2/32', '10.0.0.0/8', '::1/128']]")
         phone = Client(self.server)

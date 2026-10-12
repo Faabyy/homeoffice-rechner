@@ -74,6 +74,23 @@ function ip_in_network(string $ip, string $network): bool
     return (ord($addr[$bytes]) & $mask) === (ord($net[$bytes]) & $mask);
 }
 
+const BLOCKED_NETWORK_MESSAGE = 'Der Homeoffice-Rechner ist aus diesem Netzwerk nicht nutzbar. Bitte das Handy ohne Firmen-WLAN verwenden.';
+
+/** Whether the client IP lies in one of the config "access" => "blocked_networks". */
+function in_blocked_network(): bool
+{
+    $access = config('access');
+    if (!is_array($access)) {
+        return false;
+    }
+    foreach ((array) ($access['blocked_networks'] ?? []) as $network) {
+        if (ip_in_network(client_ip(), (string) $network)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** Why this request may not be used by a normal user, or null if it may. */
 function access_restriction(): ?string
 {
@@ -81,10 +98,8 @@ function access_restriction(): ?string
     if (!is_array($access)) {
         return null;
     }
-    foreach ((array) ($access['blocked_networks'] ?? []) as $network) {
-        if (ip_in_network(client_ip(), (string) $network)) {
-            return 'Der Homeoffice-Rechner ist aus diesem Netzwerk nicht nutzbar. Bitte das Handy ohne Firmen-WLAN verwenden.';
-        }
+    if (in_blocked_network()) {
+        return BLOCKED_NETWORK_MESSAGE;
     }
     $agent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
     if (!empty($access['mobile_only']) && !preg_match('/Android|iPhone|iPad|iPod|Mobile/i', $agent)) {
