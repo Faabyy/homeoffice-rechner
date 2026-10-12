@@ -34,5 +34,18 @@
     "filetree@claude-code-filetree": true,
     "catch-me-up@catch-me-up": true,
     "next-steps-cards@claude-mods": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/ensure-mods.sh\"",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
   }
 }
