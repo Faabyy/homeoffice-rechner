@@ -9,6 +9,15 @@
 
 const CHANGELOG = [
   {
+    id: "2026-10-12-geschenkte-minuten",
+    date: "2026-10-12",
+    title: "5 Minuten pro Tag geschenkt",
+    items: [
+      "Für jeden Tag mit erfasster Arbeitszeit werden dir 5 Minuten geschenkt: Sie zählen in der Gleitzeit "
+        + "als zusätzlich gearbeitet. Das Homeoffice-Limit bleibt davon unberührt.",
+    ],
+  },
+  {
     id: "2026-10-10-benutzername",
     date: "2026-10-10",
     title: "Anmelden mit Benutzername",

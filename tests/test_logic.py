@@ -200,7 +200,7 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(self.js("[25, -20, 0, 125].map(Logic.formatSigned)"), ["+0:25", "-0:20", "±0:00", "+2:05"])
 
     def test_flextime(self):
-        # target 8:00 per day with logged work; days without entries don't count
+        # target 8:00 per day with logged work (+5 min gift per such day); days without entries don't count
         data = """{settings: {...Logic.DEFAULT_SETTINGS}, plan: {}, entries: [
             {day: '2026-10-01', start: '08:00', end: '17:15', break: 30, location: 'homeoffice'},
             {day: '2026-10-02', start: '08:00', end: '12:00', break: 0, location: 'buero'},
@@ -208,10 +208,10 @@ class LogicTest(unittest.TestCase):
             {day: '2026-11-02', start: '08:00', end: '15:30', break: 0, location: 'buero'}],
             flex: [{day: '2026-09-30', minutes: -20, note: 'Übertrag September'}]}"""
         self.assertEqual(self.js(f"Logic.flexByDay({data})"),
-                         {"2026-10-01": 45, "2026-10-02": -30, "2026-11-02": -30})
+                         {"2026-10-01": 50, "2026-10-02": -25, "2026-11-02": -25})
         self.assertEqual(self.js(f"Logic.flexSummary({data}, 2026, 9)"), {"month": -20, "balance": -20})
-        self.assertEqual(self.js(f"Logic.flexSummary({data}, 2026, 10)"), {"month": 15, "balance": -5})
-        self.assertEqual(self.js(f"Logic.flexSummary({data}, 2026, 11)"), {"month": -30, "balance": -35})
+        self.assertEqual(self.js(f"Logic.flexSummary({data}, 2026, 10)"), {"month": 25, "balance": 5})
+        self.assertEqual(self.js(f"Logic.flexSummary({data}, 2026, 11)"), {"month": -25, "balance": -20})
         self.assertEqual(self.js("Logic.flexSummary({settings: Logic.DEFAULT_SETTINGS, entries: [], plan: {}}, 2026, 10)"),
                          {"month": 0, "balance": 0})
 

@@ -160,6 +160,8 @@ const Logic = (() => {
     return e;
   }
 
+  /** Minutes credited per day with logged work, on top of the worked time (flextime only). */
+  const GIFT_MINUTES = 5;
   const workedMinutes = (e) => timeToMinutes(e.end) - timeToMinutes(e.start) - e.break;
 
   function findOverlap(entries, entry) {
@@ -391,13 +393,13 @@ const Logic = (() => {
   /**
    * Flextime: every day with logged work has the daily target as "Soll"; the difference
    * per day is worked − target. Days without entries (vacation, days off, not yet logged)
-   * don't count. Manual corrections (data.flex) are added on their date.
+   * don't count. Every such day gets GIFT_MINUTES on top of the worked time. Manual corrections (data.flex) are added on their date.
    */
   function flexByDay(data) {
     const worked = {};
     for (const e of data.entries) worked[e.day] = (worked[e.day] || 0) + workedMinutes(e);
     const result = {};
-    for (const [day, minutes] of Object.entries(worked)) result[day] = minutes - data.settings.dailyMinutes;
+    for (const [day, minutes] of Object.entries(worked)) result[day] = minutes + GIFT_MINUTES - data.settings.dailyMinutes;
     return result;
   }
 
@@ -446,7 +448,7 @@ const Logic = (() => {
 
   return {
     HOME_OFFICE, OFFICE, LOCATIONS, WORKDAY, NON_WORKDAY, HOLIDAY, DAY_OFF, OFF_TYPES, STATES, DEFAULT_SETTINGS,
-    InputError, iso, weekday, addDays, daysInMonth, today, germanDate, timeToMinutes, minutesToTime,
+    GIFT_MINUTES, InputError, iso, weekday, addDays, daysInMonth, today, germanDate, timeToMinutes, minutesToTime,
     formatMinutes, parseDate, parseTime, parseBreak, parseDuration, parsePercent, validateSettings,
     validateEntry, workedMinutes, findOverlap, defaultEnd, easterSunday, holidays, defaultLocation,
     plannedLocation, monthDays,

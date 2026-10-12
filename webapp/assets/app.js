@@ -509,8 +509,8 @@ function updatePreview() {
   try {
     const minutes = Logic.workedMinutes(formEntry());
     worked = el("span", { class: "worked" }, `${fmtMinutes(minutes)} h`);
-    const diff = logged + minutes - state.data.settings.dailyMinutes;
-    dayFlex = `   (Tag gesamt ${fmtMinutes(logged + minutes)} h, Gleitzeit ${Logic.formatSigned(diff)})`;
+    const diff = logged + minutes + Logic.GIFT_MINUTES - state.data.settings.dailyMinutes;
+    dayFlex = `   (Tag gesamt ${fmtMinutes(logged + minutes)} h, Gleitzeit ${Logic.formatSigned(diff)}, inkl. ${Logic.GIFT_MINUTES} min geschenkt)`;
   } catch (error) {
     worked = el("span", { class: "problem" }, `– (${error.message})`);
   }
