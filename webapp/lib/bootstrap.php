@@ -22,6 +22,7 @@ require __DIR__ . '/auth.php';
 require __DIR__ . '/admin.php';
 require __DIR__ . '/data.php';
 require __DIR__ . '/backup.php';
+require __DIR__ . '/feedback.php';
 
 /** An error whose message is shown to the user as-is (so it is written in German). */
 class UserError extends Exception

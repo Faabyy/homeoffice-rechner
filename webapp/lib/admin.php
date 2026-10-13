@@ -81,7 +81,8 @@ function admin_overview(): array
             'targetId' => $r['target_id'] === null ? null : (int) $r['target_id'], 'target' => $r['target_email'],
             'details' => $r['details']];
     }, db_rows('SELECT * FROM admin_log ORDER BY id DESC LIMIT ' . ADMIN_LOG_LIMIT));
-    return ['users' => $users, 'links' => $links, 'log' => $log, 'backup' => backup_status()];
+    return ['users' => $users, 'links' => $links, 'log' => $log, 'backup' => backup_status(),
+        'feedback' => feedback_list(), 'newFeedback' => new_feedback_count()];
 }
 
 // ---- links ------------------------------------------------------------------------------------

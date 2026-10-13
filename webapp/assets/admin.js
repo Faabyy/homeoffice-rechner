@@ -35,6 +35,8 @@ async function loadAdmin() {
   // the admin's own account may just have been assigned or removed
   state.data.viewers = admin.overview.users.filter((u) => u.isViewer && u.canView.includes(state.user.id)).map((u) => u.username);
   renderViewers();
+  showNewFeedback(admin.overview.newFeedback);
+  renderFeedback();
   renderUsers();
   renderLinks();
   renderLog();
@@ -49,6 +51,66 @@ async function loadAdmin() {
 function accessSummary(u) {
   if (u.isViewer) return u.canView.length ? `sieht ${plural(u.canView.length, "Konto", "Konten")}` : "sieht nichts";
   return u.viewedBy.length ? `lesbar für ${u.viewedBy.length}` : "–";
+}
+
+// ---- feedback inbox ------------------------------------------------------------------
+
+const FEEDBACK_KINDS = { idea: "Vorschlag", bug: "Fehler" };
+const FEEDBACK_STATUS = { new: "Neu", read: "Gelesen", done: "Erledigt" };
+
+function feedbackShown() {
+  const filter = $("f-filter").value;
+  return admin.overview.feedback.filter((f) => (filter === "open" ? f.status !== "done" : !filter || f.status === filter));
+}
+
+function feedbackText(f) {
+  const where = f.page ? ` · Tab ${f.page}` : "";
+  return `${FEEDBACK_KINDS[f.kind]} von ${f.username}, ${germanDateTime(f.at)}${where}\n${f.message}`;
+}
+
+function renderFeedback() {
+  const list = feedbackShown();
+  const open = admin.overview.feedback.filter((f) => f.status !== "done").length;
+  const button = (label, onclick) => el("button", { type: "button", onclick }, label);
+  $("feedback-list").replaceChildren(...list.map((f) => el("article", { class: `feedback is-${f.status}` },
+    el("div", { class: "feedback-head" },
+      el("strong", {}, FEEDBACK_KINDS[f.kind]), el("span", {}, f.username), el("span", {}, germanDateTime(f.at)),
+      f.status === "new" ? el("span", { class: "badge new-badge" }, "Neu") : f.status === "done" ? el("span", {}, "Erledigt") : null),
+    el("p", { class: "feedback-text" }, f.message),
+    f.page || f.agent ? el("p", { class: "feedback-meta" }, [f.page && `Tab: ${f.page}`, f.agent].filter(Boolean).join(" · ")) : null,
+    el("div", { class: "form-actions" },
+      f.status === "new" ? button("Gelesen", () => feedbackAction("admin-feedback-status", f.id, "read")) : null,
+      f.status === "done" ? button("Wieder öffnen", () => feedbackAction("admin-feedback-status", f.id, "read"))
+        : button("Erledigt", () => feedbackAction("admin-feedback-status", f.id, "done")),
+      button("Löschen", () => {
+        if (window.confirm("Diese Rückmeldung endgültig löschen?")) feedbackAction("admin-feedback-delete", f.id);
+      })),
+  )));
+  $("no-feedback").hidden = list.length > 0;
+  $("f-copy").disabled = open === 0;
+  $("f-count").textContent = open ? `${open} offen` : "";
+}
+
+async function feedbackAction(action, id, status) {
+  try {
+    await api(action, { id, status });
+  } catch (error) {
+    window.alert(error.message);
+  }
+  loadAdmin();
+}
+
+async function copyFeedback() {
+  const text = admin.overview.feedback.filter((f) => f.status !== "done").map(feedbackText).join("\n\n---\n\n");
+  const button = $("f-copy");
+  const label = button.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    button.textContent = "Kopiert ✓";
+  } catch {
+    button.textContent = "Kopieren nicht möglich";
+  }
+  setTimeout(() => { button.textContent = label; }, 2500);
 }
 
 function renderUsers() {
@@ -265,4 +327,6 @@ async function copyLink(input, button) {
   $("invite-form").addEventListener("submit", invite);
   $("u-search").addEventListener("input", () => admin.overview && renderUsers());
   $("u-filter").addEventListener("change", () => admin.overview && renderUsers());
+  $("f-filter").addEventListener("change", () => admin.overview && renderFeedback());
+  $("f-copy").addEventListener("click", copyFeedback);
 })();

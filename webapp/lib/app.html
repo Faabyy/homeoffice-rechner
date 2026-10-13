@@ -198,6 +198,27 @@
           </ul>
           <p id="admin-contacts" class="hint"></p>
         </section>
+
+        <section class="section">
+          <h3>Vorschlag oder Fehler melden</h3>
+          <form id="feedback-form" class="settings" novalidate>
+            <div class="settings-grid">
+              <label class="label" for="f-kind">Art</label>
+              <select id="f-kind">
+                <option value="idea">Vorschlag</option>
+                <option value="bug">Fehler</option>
+              </select>
+              <label class="label" for="f-message">Nachricht</label>
+              <textarea id="f-message" rows="5" maxlength="2000" class="w-text"></textarea>
+            </div>
+            <p class="hint">Die Nachricht sieht nur ein Admin, zusammen mit deinem Benutzernamen. Bei einem Fehler hilft es zu
+              schreiben, was du gemacht hast und was passiert ist.</p>
+            <div class="form-actions">
+              <button type="submit">Senden</button>
+              <span id="feedback-status" class="status" role="status"></span>
+            </div>
+          </form>
+        </section>
       </div>
 
       <div class="panel" id="tab-benutzer" role="tabpanel" hidden>
@@ -217,6 +238,20 @@
           <p id="invite-error" class="form-error" role="alert"></p>
         </form>
         <div id="link-box" class="link-box" hidden></div>
+
+        <h3 class="section">Rückmeldungen</h3>
+        <div class="toolbar">
+          <select id="f-filter" aria-label="Rückmeldungen filtern">
+            <option value="open">Offen</option>
+            <option value="new">Neu</option>
+            <option value="done">Erledigt</option>
+            <option value="">Alle</option>
+          </select>
+          <button type="button" id="f-copy">Offene als Text kopieren</button>
+          <span id="f-count" class="hint"></span>
+        </div>
+        <div id="feedback-list" class="feedback-list"></div>
+        <p id="no-feedback" class="empty" hidden>Keine Rückmeldungen.</p>
 
         <h3 class="section">Konten</h3>
         <div class="toolbar">

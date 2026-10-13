@@ -103,7 +103,11 @@ function handle_api(string $method, string $action, array $body)
     switch ("$method $action") {
         case 'GET me':
             maybe_backup(); // once per app start is plenty for a backup every few days
-            return ['user' => $user] + account_info($uid);
+            return ['user' => $user] + account_info($uid)
+                + ($user['isAdmin'] ? ['newFeedback' => new_feedback_count()] : []);
+        case 'POST feedback':
+            save_feedback($user, $body);
+            return ['ok' => true];
         case 'POST password':
             change_password($user, str_field($body, 'current'), str_field($body, 'new'));
             return ['ok' => true];
@@ -183,6 +187,12 @@ function handle_api(string $method, string $action, array $body)
             case 'POST admin-owner-access':
                 set_owner_access($user, $id, $body['viewers'] ?? null);
                 return ['ok' => true];
+            case 'POST admin-feedback-status':
+                set_feedback_status($id, $body['status'] ?? null);
+                return ['newFeedback' => new_feedback_count()];
+            case 'POST admin-feedback-delete':
+                delete_feedback($id);
+                return ['newFeedback' => new_feedback_count()];
             case 'POST admin-delete-user':
                 admin_delete_user($user, $id);
                 return ['ok' => true];

@@ -228,6 +228,7 @@ class ApiTest(unittest.TestCase):
         conn.execute("DROP TABLE flex_adjustments")
         conn.execute("DROP TABLE viewer_access")  # a database from before these tables existed
         conn.execute("DROP TABLE admin_log")
+        conn.execute("DROP TABLE feedback")
         conn.execute("DROP TABLE schema_meta")  # databases from before the schema version was tracked
         conn.commit()
         conn.close()
@@ -235,7 +236,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual((status, len(data["entries"]), data["flex"]), (200, 1, []))
         self.assertEqual(self.admin.api("flex", {"day": "2026-09-30", "minutes": -20, "note": ""})[0], 200)
         conn = sqlite3.connect(db)
-        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 2)
+        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 3)
         names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'index'")}
         self.assertLessEqual({"sessions_expires", "sessions_user", "login_failures_at"}, names)
         conn.close()
@@ -275,6 +276,49 @@ class ApiTest(unittest.TestCase):
         self.admin.api("admin-delete-user", {"id": overview["users"][1]["id"]})
         self.assertEqual(user.api("me")[0], 401)
         self.assertEqual(len(self.admin.api("admin-overview")[1]["users"]), 1)
+
+    # -- feedback --
+
+    def test_feedback_reaches_admins(self):
+        user, _ = self.invite_user()
+        self.assertNotIn("newFeedback", user.api("me")[1])
+        self.assertEqual(self.admin.api("me")[1]["newFeedback"], 0)
+        for bad in ({"kind": "idea", "message": "  "}, {"kind": "idea", "message": "x" * 2001},
+                    {"kind": "lob", "message": "Das ist ein langer Text"}, {"message": "Das ist ein langer Text"}):
+            self.assertEqual(user.api("feedback", bad)[0], 400, bad)
+        self.assertEqual(user.api("feedback", {"kind": "bug", "message": "Der Kalender springt.", "page": "planung"})[0], 200)
+        self.assertEqual(user.api("feedback", {"kind": "idea", "message": "Dunkelmodus\nbitte", "page": "gibtsnicht"})[0], 200)
+
+        self.assertEqual(self.admin.api("me")[1]["newFeedback"], 2)
+        _, overview = self.admin.api("admin-overview")
+        self.assertEqual(overview["newFeedback"], 2)
+        newest, oldest = overview["feedback"]
+        self.assertEqual((newest["kind"], newest["page"], newest["status"], newest["username"]),
+                         ("idea", "", "new", "kollegin@example.org"))
+        self.assertEqual((oldest["kind"], oldest["page"]), ("bug", "planung"))
+        # only admins read or change them
+        self.assertEqual(user.api("admin-overview")[0], 403)
+        self.assertEqual(user.api("admin-feedback-status", {"id": oldest["id"], "status": "done"})[0], 403)
+        self.assertEqual(user.api("admin-feedback-delete", {"id": oldest["id"]})[0], 403)
+
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": oldest["id"], "status": "read"}), (200, {"newFeedback": 1}))
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": oldest["id"], "status": "kaputt"})[0], 400)
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": 9999, "status": "done"})[0], 404)
+        self.assertEqual(self.admin.api("admin-feedback-delete", {"id": newest["id"]}), (200, {"newFeedback": 0}))
+        self.assertEqual([f["id"] for f in self.admin.api("admin-overview")[1]["feedback"]], [oldest["id"]])
+
+        # the text stays when the account is deleted
+        _, users = self.admin.api("admin-overview")
+        self.admin.api("admin-delete-user", {"id": next(u["id"] for u in users["users"] if u["username"].startswith("kollegin"))})
+        self.assertEqual(len(self.admin.api("admin-overview")[1]["feedback"]), 1)
+
+    def test_feedback_limit_per_hour(self):
+        user, _ = self.invite_user()
+        for i in range(5):
+            self.assertEqual(user.api("feedback", {"kind": "idea", "message": f"Vorschlag Nummer {i}"})[0], 200)
+        status, res = user.api("feedback", {"kind": "idea", "message": "Noch ein Vorschlag"})
+        self.assertEqual(status, 429)
+        self.assertIn("Stunde", res["error"])
 
     # -- read-only accounts --
 

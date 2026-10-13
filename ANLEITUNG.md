@@ -81,6 +81,14 @@ abmelden**, Lese-Freigaben setzen, die Daten des Kontos exportieren und es lösc
 stehen im **Protokoll** unten im Tab. Wer Fragen hat, findet die Admins in der App unter
 *Einstellungen → Hilfe & Kontakt*.
 
+**Rückmeldungen:** Jedes Konto kann unter *Einstellungen → Vorschlag oder Fehler melden* einen Text schicken
+(Art: Vorschlag oder Fehler, höchstens 2000 Zeichen, höchstens 5 pro Stunde). Die App verschickt dazu keine
+E-Mail: Die Nachrichten stehen bei den Admins im Tab **Benutzer** unter *Rückmeldungen*, mit Benutzername,
+Zeit, Tab und Browser. Hinter dem Tab steht **Benutzer (n)**, solange n Rückmeldungen neu sind. Jede lässt sich als
+gelesen oder erledigt markieren oder löschen; *Offene als Text kopieren* kopiert alle offenen zum Weitergeben.
+Beim Löschen eines Kontos bleiben seine Rückmeldungen erhalten. Neue Tabelle `feedback` (wird beim ersten
+Aufruf automatisch angelegt).
+
 **Lese-Konten:** Bei der Einladung als Rolle **Nur Lesen** wählen. Ein solches Konto hat keine eigene
 Zeiterfassung, sondern sieht nur Planung, Einträge und Auswertung anderer Konten. Welche das sind, wird
 nach der Anmeldung der Person in ihrer Detailansicht unter **Freigaben** festgelegt (Häkchen setzen →

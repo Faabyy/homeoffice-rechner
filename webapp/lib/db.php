@@ -34,7 +34,7 @@ function db_driver(): string
 
 // Raise this whenever the schema changes below (new table, new column): databases with a lower
 // version run the migration once and are then marked as current.
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function schema_version(PDO $pdo): int
 {
@@ -137,6 +137,18 @@ function ensure_schema(PDO $pdo): void
             target_email VARCHAR(254) NULL,
             details VARCHAR(500) NOT NULL
         )$suffix", 'CREATE INDEX admin_log_target ON admin_log (target_id)'],
+        // suggestions and bug reports (no foreign key: they stay readable when the account is deleted)
+        'feedback' => ["CREATE TABLE feedback (
+            id $autoId,
+            user_id INT NOT NULL,
+            username VARCHAR(254) NOT NULL,             -- as of sending
+            created_at INT NOT NULL,
+            kind VARCHAR(10) NOT NULL,                  -- 'idea' or 'bug'
+            message TEXT NOT NULL,
+            page VARCHAR(20) NOT NULL,                  -- tab the report was written on
+            agent VARCHAR(250) NOT NULL,                -- browser (User-Agent)
+            status VARCHAR(10) NOT NULL                 -- 'new', 'read' or 'done'
+        )$suffix", 'CREATE INDEX feedback_status ON feedback (status)'],
     ];
     // columns added after the first release: [table, column, definition]
     $columns = [

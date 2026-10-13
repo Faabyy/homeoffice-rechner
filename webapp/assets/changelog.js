@@ -9,6 +9,15 @@
 
 const CHANGELOG = [
   {
+    id: "2026-10-13-rueckmeldungen",
+    date: "2026-10-13",
+    title: "Vorschläge und Fehler melden",
+    items: [
+      "Unter Einstellungen gibt es jetzt „Vorschlag oder Fehler melden“. Schreib einfach auf, "
+        + "was dir fehlt oder nicht funktioniert – die Nachricht sehen die Admins.",
+    ],
+  },
+  {
     id: "2026-10-12-geschenkte-minuten",
     date: "2026-10-12",
     title: "5 Minuten pro Tag geschenkt",

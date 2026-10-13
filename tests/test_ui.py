@@ -142,15 +142,15 @@ class UiTest(unittest.TestCase):
         self.assertTrue(self.js(f"{cell('Mo 19.10.2026')}.classList.contains('school')"))
         self.assertIn("Herbstferien", self.js(f"{cell('Sa 17.10.2026')}.textContent"))
 
-        # flextime: 05.10. has 07:30–12:00 minus 30 min break (4:00) -> -4:00; add a correction of -0:20 on 30.09.
-        self.assertEqual(self.js("document.querySelector('.summary .flex-balance').textContent"), "-4:00 h")
+        # flextime: 05.10. has 07:30–12:00 minus 30 min break (4:00) + 0:05 gift -> -3:55; add a correction of -0:20 on 30.09.
+        self.assertEqual(self.js("document.querySelector('.summary .flex-balance').textContent"), "-3:55 h")
         self.js("document.getElementById('x-date').value = '30.9.2026';"
                 "document.getElementById('x-minutes').value = '-0:20';"
                 "document.getElementById('x-note').value = 'Übertrag September';"
                 "document.getElementById('flex-form').requestSubmit()")
         b.wait_for("document.getElementById('flex-body').textContent.includes('Übertrag September')")
-        self.assertEqual(self.js("document.querySelector('.summary .flex-balance').textContent"), "-4:20 h")
-        self.assertIn("-4:00", self.js("document.querySelector('.summary .flex .caption').textContent"))
+        self.assertEqual(self.js("document.querySelector('.summary .flex-balance').textContent"), "-4:15 h")
+        self.assertIn("-3:55", self.js("document.querySelector('.summary .flex .caption').textContent"))
 
         # invite someone, log out, use the link
         self.js("document.querySelector('[data-tab=benutzer]').click()")
@@ -418,6 +418,41 @@ class UiTest(unittest.TestCase):
         # where to ask for more access
         self.assertIn("admin@example.org", self.js("document.getElementById('admin-contacts').textContent"))
         self.assertTrue(self.js("document.querySelector('.help-list .viewer-only').offsetParent !== null"))
+        self.assertEqual(b.errors, [])
+
+    def test_feedback(self):
+        b = self.browser
+        admin = Client(self.server)
+        admin.api("login", {"username": "admin@example.org", "password": "geheim12345"})
+        link = admin.api("admin-invite", {"username": "anna@example.org"})[1]["link"]
+        Client(self.server).api("redeem", {"token": link.split("token=")[1], "password": "passwort-123"})
+
+        # Anna writes a report in Einstellungen
+        self.login("anna@example.org", "passwort-123")
+        self.js("document.querySelector('[data-tab=einstellungen]').click()")
+        self.js("document.getElementById('f-kind').value = 'bug';"
+                "document.getElementById('f-message').value = 'ab';"
+                "document.getElementById('feedback-form').requestSubmit()")
+        self.assertIn("kurz", b.wait_for("document.getElementById('feedback-status').textContent"))
+        self.js("document.getElementById('f-message').value = 'Der Kalender springt beim Scrollen.';"
+                "document.getElementById('feedback-form').requestSubmit()")
+        b.wait_for("document.getElementById('feedback-status').textContent.includes('Danke')")
+        self.assertEqual(self.js("document.getElementById('f-message').value"), "")
+
+        # the admin sees "(1)" behind the tab and the text in the inbox
+        self.js("fetch('api.php?action=logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})")
+        self.login("admin@example.org", "geheim12345")
+        b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Benutzer (1)'")
+        self.js("document.querySelector('[data-tab=benutzer]').click()")
+        b.wait_for("document.querySelectorAll('.feedback').length === 1")
+        self.assertIn("Der Kalender springt", self.js("document.querySelector('.feedback-text').textContent"))
+        self.assertIn("anna@example.org", self.js("document.querySelector('.feedback-head').textContent"))
+        self.js("[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Gelesen').click()")
+        b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Benutzer'")
+        self.js("window.confirm = () => true;"
+                "[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Erledigt').click()")
+        b.wait_for("document.querySelectorAll('.feedback').length === 0")
+        self.assertFalse(self.js("document.getElementById('no-feedback').hidden"))
         self.assertEqual(b.errors, [])
 
 

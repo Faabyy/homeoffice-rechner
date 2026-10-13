@@ -924,6 +924,30 @@ async function deleteFlex(item) {
   render();
 }
 
+// ---- feedback ---------------------------------------------------------------------------
+
+/** Show the number of new reports behind the Benutzer tab: "Benutzer (1)". */
+function showNewFeedback(count) {
+  document.querySelector('.tabs [data-tab="benutzer"]').textContent = count > 0 ? `Benutzer (${count})` : "Benutzer";
+}
+
+async function sendFeedback(event) {
+  event.preventDefault();
+  const status = $("feedback-status");
+  const fail = (message) => { status.textContent = message; status.classList.add("error"); };
+  status.classList.remove("error");
+  status.textContent = "";
+  const message = $("f-message").value.trim();
+  if (message.length < 5) return fail("Bitte beschreibe kurz, worum es geht.");
+  try {
+    await api("feedback", { kind: $("f-kind").value, message, page: document.body.dataset.tab || "" });
+  } catch (error) {
+    return fail(error.message);
+  }
+  $("f-message").value = "";
+  status.textContent = "Danke, die Nachricht ist angekommen ✓";
+}
+
 // ---- administration (assets/admin.js, loaded when an admin first opens the Benutzer tab) ----
 
 let adminScript = null;
@@ -1065,6 +1089,7 @@ async function init() {
   });
   $("settings-form").addEventListener("submit", saveSettings);
   $("password-form").addEventListener("submit", changePassword);
+  $("feedback-form").addEventListener("submit", sendFeedback);
   $("flex-form").addEventListener("submit", addFlex);
   $("export-btn").addEventListener("click", exportData);
   $("import-file").addEventListener("change", importData);
@@ -1079,6 +1104,7 @@ async function init() {
     const me = await api("me");
     state.user = me.user;
     state.account = { createdAt: me.createdAt, admins: me.admins };
+    showNewFeedback(me.newFeedback || 0);
     renderHelp();
     if (state.user.isViewer) {
       await initReadOnly();

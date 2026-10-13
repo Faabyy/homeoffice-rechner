@@ -7,6 +7,22 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-13 – Vorschläge und Fehler melden
+
+Upload-Ordner: `update-rueckmeldungen/`
+
+- Neue Tabelle `feedback` (`SCHEMA_VERSION` 3, wird beim ersten Aufruf angelegt; ohne Fremdschlüssel, die Texte
+  bleiben beim Löschen eines Kontos). Neu `lib/feedback.php`: `save_feedback()` (Art `idea`/`bug`, 5–2000 Zeichen,
+  höchstens 5 pro Stunde und Konto, speichert Benutzername, Tab und User-Agent), `new_feedback_count()`,
+  `feedback_list()` (neueste 200), Status `new`/`read`/`done`.
+- `api.php`: `POST feedback` (jedes angemeldete Konto, auch Lese-Konten), `POST admin-feedback-status` und
+  `admin-feedback-delete`; `GET me` liefert Admins `newFeedback`, `admin-overview` zusätzlich `feedback` und `newFeedback`.
+- App: Formular unter Einstellungen → „Vorschlag oder Fehler melden“; im Tab Benutzer der Abschnitt „Rückmeldungen“
+  (Filter, gelesen/erledigt/löschen, „Offene als Text kopieren“). Hinter dem Tab steht „Benutzer (n)“ für neue
+  Rückmeldungen, die Zahl kommt schon mit `GET me`, `admin.js` wird dafür nicht geladen. Textfeld und Liste in allen drei Designs.
+- Tests: `test_feedback_reaches_admins`, `test_feedback_limit_per_hour`, `test_feedback` (Oberfläche);
+  `test_full_flow` auf die geschenkten 5 Minuten angepasst (war seit dem Update davor rot).
+
 ## 2026-10-13 – Hinweistexte bei gesperrtem Netz und am PC
 
 Upload-Ordner: `update-hinweistexte/`
