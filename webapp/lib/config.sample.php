@@ -29,7 +29,7 @@ return [
     'setup_key' => 'HIER-EINEN-LANGEN-ZUFAELLIGEN-SCHLUESSEL-EINTRAGEN',
 
     // Zugriff für normale Benutzer einschränken (Administratoren sind ausgenommen):
-    // blocked_networks: IP-Adressen oder Netze (CIDR, z. B. '203.0.113.0/24'), z. B. Firmennetz/VPN.
+    // blocked_networks: IP-Adressen oder Netze (CIDR, z. B. '203.0.113.0/24'), z. B. ein Netz, in dem die App nicht laufen soll.
     // mobile_only: nur Handy-/Tablet-Browser zulassen (iPads im Desktop-Modus gelten nicht als mobil).
     'access' => [
         'blocked_networks' => [],

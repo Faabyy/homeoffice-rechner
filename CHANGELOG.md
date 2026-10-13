@@ -11,8 +11,9 @@ Sitzungsverlauf.
 
 Upload-Ordner: `update-hinweistexte/`
 
-- `auth.php`: `BLOCKED_NETWORK_MESSAGE` ohne Erwähnung des Firmen-WLANs („in diesem Netzwerk nicht verfügbar … anderes
-  WLAN oder mobile Daten“); `mobile_only`-Text „nur auf dem Handy oder Tablet verfügbar. Bitte öffne ihn dort.“
+- `auth.php`: `BLOCKED_NETWORK_MESSAGE` allgemein gehalten („in diesem Netzwerk nicht verfügbar … anderes Netzwerk, zum
+  Beispiel mobile Daten“); `mobile_only`-Text „nur auf Handy und Tablet verfügbar“. Betreiber-Beispiele aus
+  `ANLEITUNG.md` und den Config-Kommentaren entfernt.
 
 ## 2026-10-12 – Gesperrtes Netz: keine Anmeldeseite
 

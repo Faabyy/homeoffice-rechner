@@ -22,7 +22,7 @@ class AccessRestrictionTest(unittest.TestCase):
         token = self.start("['mobile_only' => true]")
         laptop = Client(self.server)
         status, res = laptop.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": LAPTOP})
-        self.assertEqual((status, res["error"]), (403, "Der Homeoffice-Rechner ist nur auf dem Handy oder Tablet verfügbar. Bitte öffne ihn dort."))
+        self.assertEqual((status, res["error"]), (403, "Der Homeoffice-Rechner ist nur auf Handy und Tablet verfügbar. Bitte öffne ihn auf einem dieser Geräte."))
         phone = Client(self.server)  # the link still works on the phone
         self.assertEqual(phone.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": PHONE})[0], 200)
         self.assertEqual(phone.api("me", **{"User-Agent": PHONE})[0], 200)

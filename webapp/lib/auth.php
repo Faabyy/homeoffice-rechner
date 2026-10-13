@@ -74,7 +74,7 @@ function ip_in_network(string $ip, string $network): bool
     return (ord($addr[$bytes]) & $mask) === (ord($net[$bytes]) & $mask);
 }
 
-const BLOCKED_NETWORK_MESSAGE = 'Der Homeoffice-Rechner ist in diesem Netzwerk nicht verfügbar. Bitte wechsle in ein anderes WLAN oder nutze mobile Daten.';
+const BLOCKED_NETWORK_MESSAGE = 'Der Homeoffice-Rechner ist in diesem Netzwerk nicht verfügbar. Bitte nutze ein anderes Netzwerk, zum Beispiel mobile Daten.';
 
 /** Whether the client IP lies in one of the config "access" => "blocked_networks". */
 function in_blocked_network(): bool
@@ -103,7 +103,7 @@ function access_restriction(): ?string
     }
     $agent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
     if (!empty($access['mobile_only']) && !preg_match('/Android|iPhone|iPad|iPod|Mobile/i', $agent)) {
-        return 'Der Homeoffice-Rechner ist nur auf dem Handy oder Tablet verfügbar. Bitte öffne ihn dort.';
+        return 'Der Homeoffice-Rechner ist nur auf Handy und Tablet verfügbar. Bitte öffne ihn auf einem dieser Geräte.';
     }
     return null;
 }

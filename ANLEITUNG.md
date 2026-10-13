@@ -111,9 +111,9 @@ In `lib/config.php` lässt sich unter `access` festlegen, von wo normale Benutze
 ],
 ```
 
-- **`blocked_networks`**: IP-Adressen oder Netze (CIDR), aus denen die App gesperrt ist – z. B. das
-  Firmennetz bzw. das Firmen-VPN. Die eigene öffentliche IP zeigt z. B. <https://ifconfig.me>.
-  Gesperrt ist dann jedes Gerät in diesem Netz, auch das Handy im Firmen-WLAN; schon die
+- **`blocked_networks`**: IP-Adressen oder Netze (CIDR), aus denen die App gesperrt ist – z. B. ein
+  Netz, in dem die App nicht laufen soll. Die eigene öffentliche IP zeigt z. B. <https://ifconfig.me>.
+  Gesperrt ist dann jedes Gerät in diesem Netz, auch ein Handy, das in diesem Netz im WLAN hängt; schon die
   Anmeldeseite ist von dort nicht aufrufbar (nur eine Hinweis-Seite). Bei `mobile_only` bleibt die Anmeldeseite
   dagegen aufrufbar, nur die Anmeldung selbst wird abgelehnt.
 - **`mobile_only`**: nur Handy-Browser zulassen; Windows-, Mac- und Linux-Browser werden abgelehnt.
