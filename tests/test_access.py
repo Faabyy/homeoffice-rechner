@@ -22,7 +22,7 @@ class AccessRestrictionTest(unittest.TestCase):
         token = self.start("['mobile_only' => true]")
         laptop = Client(self.server)
         status, res = laptop.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": LAPTOP})
-        self.assertEqual((status, res["error"]), (403, "Der Homeoffice-Rechner ist nur auf dem Handy nutzbar."))
+        self.assertEqual((status, res["error"]), (403, "Der Homeoffice-Rechner ist nur auf dem Handy oder Tablet verfügbar. Bitte öffne ihn dort."))
         phone = Client(self.server)  # the link still works on the phone
         self.assertEqual(phone.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": PHONE})[0], 200)
         self.assertEqual(phone.api("me", **{"User-Agent": PHONE})[0], 200)
@@ -40,13 +40,13 @@ class AccessRestrictionTest(unittest.TestCase):
         phone = Client(self.server)
         status, res = phone.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": PHONE})
         self.assertEqual(status, 403)
-        self.assertIn("aus diesem Netzwerk nicht nutzbar", res["error"])
+        self.assertIn("in diesem Netzwerk nicht verfügbar", res["error"])
 
     def test_blocked_network_gets_no_login_page_but_laptops_do(self):
         self.start("['blocked_networks' => ['127.0.0.0/8']]")
         status, _, body = Client(self.server).request("GET", "login.php", headers={"User-Agent": LAPTOP})
         self.assertEqual(status, 403)
-        self.assertIn("aus diesem Netzwerk nicht nutzbar", body.decode())
+        self.assertIn("in diesem Netzwerk nicht verfügbar", body.decode())
         self.assertEqual(Client(self.server).request("GET", "login.php?token=x", headers={"User-Agent": PHONE})[0], 403)
         self.server.close()
         self.start("['blocked_networks' => ['10.0.0.0/8'], 'mobile_only' => true]")

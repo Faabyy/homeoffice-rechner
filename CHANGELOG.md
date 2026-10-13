@@ -7,6 +7,13 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-13 – Hinweistexte bei gesperrtem Netz und am PC
+
+Upload-Ordner: `update-hinweistexte/`
+
+- `auth.php`: `BLOCKED_NETWORK_MESSAGE` ohne Erwähnung des Firmen-WLANs („in diesem Netzwerk nicht verfügbar … anderes
+  WLAN oder mobile Daten“); `mobile_only`-Text „nur auf dem Handy oder Tablet verfügbar. Bitte öffne ihn dort.“
+
 ## 2026-10-12 – Gesperrtes Netz: keine Anmeldeseite
 
 Upload-Ordner: `update-netzsperre-login/`
