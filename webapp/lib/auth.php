@@ -74,7 +74,7 @@ function ip_in_network(string $ip, string $network): bool
     return (ord($addr[$bytes]) & $mask) === (ord($net[$bytes]) & $mask);
 }
 
-const BLOCKED_NETWORK_MESSAGE = 'Der Homeoffice-Rechner ist hier nicht verfügbar: Entweder wird kein Handy oder Tablet verwendet, oder dieses Netzwerk ist gesperrt. Bitte nutze ein Handy mit mobilen Daten oder einem anderen WLAN.';
+const BLOCKED_NETWORK_MESSAGE = 'Der Homeoffice-Rechner ist hier nicht verfügbar: Entweder wird kein Handy oder Tablet verwendet, oder die Verbindung über dieses Netzwerk ist nicht möglich. Bitte nutze ein Handy mit mobilen Daten oder einem anderen WLAN.';
 
 /** Whether the client IP lies in one of the config "access" => "blocked_networks". */
 function in_blocked_network(): bool

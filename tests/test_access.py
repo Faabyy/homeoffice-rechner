@@ -22,7 +22,7 @@ class AccessRestrictionTest(unittest.TestCase):
         token = self.start("['mobile_only' => true]")
         laptop = Client(self.server)
         status, res = laptop.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": LAPTOP})
-        self.assertEqual((status, res["error"]), (403, "Der Homeoffice-Rechner ist hier nicht verfügbar: Entweder wird kein Handy oder Tablet verwendet, oder dieses Netzwerk ist gesperrt. Bitte nutze ein Handy mit mobilen Daten oder einem anderen WLAN."))
+        self.assertEqual((status, res["error"]), (403, "Der Homeoffice-Rechner ist hier nicht verfügbar: Entweder wird kein Handy oder Tablet verwendet, oder die Verbindung über dieses Netzwerk ist nicht möglich. Bitte nutze ein Handy mit mobilen Daten oder einem anderen WLAN."))
         phone = Client(self.server)  # the link still works on the phone
         self.assertEqual(phone.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": PHONE})[0], 200)
         self.assertEqual(phone.api("me", **{"User-Agent": PHONE})[0], 200)
@@ -40,13 +40,13 @@ class AccessRestrictionTest(unittest.TestCase):
         phone = Client(self.server)
         status, res = phone.api("redeem", {"token": token, "password": "kollegin-pw-1"}, **{"User-Agent": PHONE})
         self.assertEqual(status, 403)
-        self.assertIn("dieses Netzwerk ist gesperrt", res["error"])
+        self.assertIn("Verbindung über dieses Netzwerk ist nicht möglich", res["error"])
 
     def test_blocked_network_gets_no_login_page_but_laptops_do(self):
         self.start("['blocked_networks' => ['127.0.0.0/8']]")
         status, _, body = Client(self.server).request("GET", "login.php", headers={"User-Agent": LAPTOP})
         self.assertEqual(status, 403)
-        self.assertIn("dieses Netzwerk ist gesperrt", body.decode())
+        self.assertIn("Verbindung über dieses Netzwerk ist nicht möglich", body.decode())
         self.assertEqual(Client(self.server).request("GET", "login.php?token=x", headers={"User-Agent": PHONE})[0], 403)
         self.server.close()
         self.start("['blocked_networks' => ['10.0.0.0/8'], 'mobile_only' => true]")
