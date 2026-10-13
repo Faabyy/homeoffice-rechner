@@ -438,6 +438,8 @@ class UiTest(unittest.TestCase):
                 "document.getElementById('feedback-form').requestSubmit()")
         b.wait_for("document.getElementById('feedback-status').textContent.includes('Danke')")
         self.assertEqual(self.js("document.getElementById('f-message').value"), "")
+        self.assertIn("Eingegangen", self.js("document.getElementById('my-feedback-list').textContent"))
+        self.assertIn("Der Kalender springt", self.js("document.getElementById('my-feedback-list').textContent"))
 
         # the admin sees "(1)" behind the tab and the text in the inbox
         self.js("fetch('api.php?action=logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})")
@@ -453,6 +455,11 @@ class UiTest(unittest.TestCase):
                 "[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Erledigt').click()")
         b.wait_for("document.querySelectorAll('.feedback').length === 0")
         self.assertFalse(self.js("document.getElementById('no-feedback').hidden"))
+
+        # Anna sees the new status after the next start
+        self.js("fetch('api.php?action=logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})")
+        self.login("anna@example.org", "passwort-123")
+        b.wait_for("document.getElementById('my-feedback-list').textContent.includes('Erledigt')")
         self.assertEqual(b.errors, [])
 
 

@@ -423,6 +423,9 @@ body:not(.read-only) .viewer-only { display: none !important; }
 .feedback-text { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .feedback-meta { margin: 4px 0 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .feedback .form-actions { margin-top: 8px; flex-wrap: wrap; }
+.feedback-state { background: var(--highlight); color: var(--text); }
+#my-feedback { margin-top: 24px; }
+#my-feedback h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
 .w-link { width: 32em; max-width: 100%; }
 .link-box { margin-top: 12px; padding: 12px; background: var(--highlight); border-radius: 6px; }
 .link-box p { margin: 0 0 8px; }

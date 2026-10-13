@@ -296,12 +296,17 @@ class ApiTest(unittest.TestCase):
         self.assertEqual((newest["kind"], newest["page"], newest["status"], newest["username"]),
                          ("idea", "", "new", "kollegin@example.org"))
         self.assertEqual((oldest["kind"], oldest["page"]), ("bug", "planung"))
+        # the sender sees only the own reports, with their status
+        mine = user.api("my-feedback")[1]["feedback"]
+        self.assertEqual([(f["kind"], f["status"]) for f in mine], [("idea", "new"), ("bug", "new")])
+        self.assertEqual(self.admin.api("my-feedback")[1]["feedback"], [])
         # only admins read or change them
         self.assertEqual(user.api("admin-overview")[0], 403)
         self.assertEqual(user.api("admin-feedback-status", {"id": oldest["id"], "status": "done"})[0], 403)
         self.assertEqual(user.api("admin-feedback-delete", {"id": oldest["id"]})[0], 403)
 
         self.assertEqual(self.admin.api("admin-feedback-status", {"id": oldest["id"], "status": "read"}), (200, {"newFeedback": 1}))
+        self.assertEqual([f["status"] for f in user.api("my-feedback")[1]["feedback"]], ["new", "read"])
         self.assertEqual(self.admin.api("admin-feedback-status", {"id": oldest["id"], "status": "kaputt"})[0], 400)
         self.assertEqual(self.admin.api("admin-feedback-status", {"id": 9999, "status": "done"})[0], 404)
         self.assertEqual(self.admin.api("admin-feedback-delete", {"id": newest["id"]}), (200, {"newFeedback": 0}))

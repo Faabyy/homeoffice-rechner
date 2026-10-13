@@ -42,6 +42,15 @@ function save_feedback(array $user, array $body): void
         [$user['id'], $user['username'], time(), $kind, $message, $page, $agent, 'new']);
 }
 
+/** The user's own reports with their status, newest first. */
+function my_feedback(int $userId): array
+{
+    return array_map(function ($r) {
+        return ['at' => date('Y-m-d H:i', (int) $r['created_at']), 'kind' => $r['kind'], 'message' => $r['message'],
+            'status' => $r['status']];
+    }, db_rows('SELECT * FROM feedback WHERE user_id = ? ORDER BY id DESC LIMIT ' . FEEDBACK_LIST_LIMIT, [$userId]));
+}
+
 /** Number of reports nobody has opened yet. */
 function new_feedback_count(): int
 {

@@ -15,6 +15,7 @@ const CHANGELOG = [
     items: [
       "Unter Einstellungen gibt es jetzt „Vorschlag oder Fehler melden“. Schreib einfach auf, "
         + "was dir fehlt oder nicht funktioniert – die Nachricht sehen die Admins.",
+      "Darunter siehst du deine Rückmeldungen mit ihrem Stand: eingegangen, gelesen oder erledigt.",
     ],
   },
   {

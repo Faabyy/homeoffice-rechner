@@ -20,6 +20,9 @@ Upload-Ordner: `update-rueckmeldungen/`
 - App: Formular unter Einstellungen → „Vorschlag oder Fehler melden“; im Tab Benutzer der Abschnitt „Rückmeldungen“
   (Filter, gelesen/erledigt/löschen, „Offene als Text kopieren“). Hinter dem Tab steht „Benutzer (n)“ für neue
   Rückmeldungen, die Zahl kommt schon mit `GET me`, `admin.js` wird dafür nicht geladen. Textfeld und Liste in allen drei Designs.
+- Absender sehen den Stand: `GET my-feedback` (und `POST feedback` liefert die Liste zurück) gibt dem Konto nur die eigenen
+  Rückmeldungen mit Status zurück (`my_feedback()`); Liste „Deine Rückmeldungen“ unter dem Formular (Eingegangen / Gelesen /
+  Erledigt), `renderMyFeedback()` in `app.js`.
 - Tests: `test_feedback_reaches_admins`, `test_feedback_limit_per_hour`, `test_feedback` (Oberfläche);
   `test_full_flow` auf die geschenkten 5 Minuten angepasst (war seit dem Update davor rot).
 

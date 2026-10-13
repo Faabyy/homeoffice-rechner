@@ -86,7 +86,8 @@ stehen im **Protokoll** unten im Tab. Wer Fragen hat, findet die Admins in der A
 E-Mail: Die Nachrichten stehen bei den Admins im Tab **Benutzer** unter *Rückmeldungen*, mit Benutzername,
 Zeit, Tab und Browser. Hinter dem Tab steht **Benutzer (n)**, solange n Rückmeldungen neu sind. Jede lässt sich als
 gelesen oder erledigt markieren oder löschen; *Offene als Text kopieren* kopiert alle offenen zum Weitergeben.
-Beim Löschen eines Kontos bleiben seine Rückmeldungen erhalten. Neue Tabelle `feedback` (wird beim ersten
+Die Absender sehen ihre eigenen Rückmeldungen mit dem Stand (eingegangen, gelesen, erledigt) unter dem Formular;
+löscht ein Admin eine Rückmeldung, verschwindet sie auch dort. Beim Löschen eines Kontos bleiben seine Rückmeldungen erhalten. Neue Tabelle `feedback` (wird beim ersten
 Aufruf automatisch angelegt).
 
 **Lese-Konten:** Bei der Einladung als Rolle **Nur Lesen** wählen. Ein solches Konto hat keine eigene

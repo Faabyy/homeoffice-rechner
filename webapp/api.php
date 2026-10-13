@@ -107,7 +107,9 @@ function handle_api(string $method, string $action, array $body)
                 + ($user['isAdmin'] ? ['newFeedback' => new_feedback_count()] : []);
         case 'POST feedback':
             save_feedback($user, $body);
-            return ['ok' => true];
+            return ['feedback' => my_feedback($uid)];
+        case 'GET my-feedback':
+            return ['feedback' => my_feedback($uid)];
         case 'POST password':
             change_password($user, str_field($body, 'current'), str_field($body, 'new'));
             return ['ok' => true];

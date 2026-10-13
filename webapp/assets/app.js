@@ -931,6 +931,25 @@ function showNewFeedback(count) {
   document.querySelector('.tabs [data-tab="benutzer"]').textContent = count > 0 ? `Benutzer (${count})` : "Benutzer";
 }
 
+// what the sender sees for the admins' statuses (admin.js has its own labels)
+const MY_FEEDBACK_STATUS = { new: "Eingegangen", read: "Gelesen", done: "Erledigt" };
+
+function renderMyFeedback(list) {
+  $("my-feedback").hidden = list.length === 0;
+  $("my-feedback-list").replaceChildren(...list.map((f) => el("article", { class: `feedback${f.status === "done" ? " is-done" : ""}` },
+    el("div", { class: "feedback-head" },
+      el("strong", {}, f.kind === "bug" ? "Fehler" : "Vorschlag"),
+      el("span", {}, `${Logic.germanDate(f.at.slice(0, 10))} ${f.at.slice(11)}`),
+      el("span", { class: `badge ${f.status === "new" ? "new-badge" : "feedback-state"}` }, MY_FEEDBACK_STATUS[f.status])),
+    el("p", { class: "feedback-text" }, f.message))));
+}
+
+async function loadMyFeedback() {
+  try {
+    renderMyFeedback((await api("my-feedback")).feedback);
+  } catch { /* the list is only a convenience */ }
+}
+
 async function sendFeedback(event) {
   event.preventDefault();
   const status = $("feedback-status");
@@ -940,7 +959,7 @@ async function sendFeedback(event) {
   const message = $("f-message").value.trim();
   if (message.length < 5) return fail("Bitte beschreibe kurz, worum es geht.");
   try {
-    await api("feedback", { kind: $("f-kind").value, message, page: document.body.dataset.tab || "" });
+    renderMyFeedback((await api("feedback", { kind: $("f-kind").value, message, page: document.body.dataset.tab || "" })).feedback);
   } catch (error) {
     return fail(error.message);
   }
@@ -1105,6 +1124,7 @@ async function init() {
     state.user = me.user;
     state.account = { createdAt: me.createdAt, admins: me.admins };
     showNewFeedback(me.newFeedback || 0);
+    loadMyFeedback();
     renderHelp();
     if (state.user.isViewer) {
       await initReadOnly();
