@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 // Suggestions and bug reports that users write in the app (Einstellungen → Rückmeldung).
-// Admins read them in the Benutzer tab; the number of new ones is shown at that tab.
+// Admins read them in the Verwaltung tab; the number of new ones is shown at that tab.
 
 const FEEDBACK_KINDS = ['idea', 'bug'];
 const FEEDBACK_STATUSES = ['new', 'read', 'done'];
@@ -57,7 +57,7 @@ function new_feedback_count(): int
     return (int) db_row("SELECT COUNT(*) AS n FROM feedback WHERE status = 'new'")['n'];
 }
 
-/** The newest reports for the Benutzer tab. */
+/** The newest reports for the Verwaltung tab. */
 function feedback_list(): array
 {
     return array_map(function ($r) {

@@ -81,10 +81,10 @@ abmelden**, Lese-Freigaben setzen, die Daten des Kontos exportieren und es lösc
 stehen im **Protokoll** unten im Tab. Wer Fragen hat, findet die Admins in der App unter
 *Einstellungen → Hilfe & Kontakt*.
 
-**Rückmeldungen:** Jedes Konto kann unter *Einstellungen → Vorschlag oder Fehler melden* einen Text schicken
+**Rückmeldungen:** Jedes Konto kann unter *Einstellungen → Hilfe & Rückmeldung* (oder mit dem Knopf **Feedback** oben rechts) einen Text schicken
 (Art: Vorschlag oder Fehler, höchstens 2000 Zeichen, höchstens 5 pro Stunde). Die App verschickt dazu keine
-E-Mail: Die Nachrichten stehen bei den Admins im Tab **Benutzer** unter *Rückmeldungen*, mit Benutzername,
-Zeit, Tab und Browser. Hinter dem Tab steht **Benutzer (n)**, solange n Rückmeldungen neu sind. Jede lässt sich als
+E-Mail: Die Nachrichten stehen bei den Admins im Tab **Verwaltung** unter *Rückmeldungen*, mit Benutzername,
+Zeit, Tab und Browser. Hinter dem Tab steht **Verwaltung (n)**, solange n Rückmeldungen neu sind. Jede lässt sich als
 gelesen oder erledigt markieren oder löschen; *Offene als Text kopieren* kopiert alle offenen zum Weitergeben.
 Die Absender sehen ihre eigenen Rückmeldungen mit dem Stand (eingegangen, gelesen, erledigt) unter dem Formular;
 löscht ein Admin eine Rückmeldung, verschwindet sie auch dort. Beim Löschen eines Kontos bleiben seine Rückmeldungen erhalten. Neue Tabelle `feedback` (wird beim ersten
@@ -143,7 +143,7 @@ speichern und über **Importieren …** wieder einlesen – z. B. beim Umzug auf
 
 Bei SQLite liegen alle Daten in der Datei `data/homeoffice-….sqlite`. Die App sichert sie
 **automatisch**: Beim ersten Aufruf nach 7 Tagen entsteht eine Kopie in `data/backups/`
-(`sicherung-DATUM-….sqlite`); die letzten 8 bleiben erhalten. Im Tab **Benutzer → Sicherung** steht,
+(`sicherung-DATUM-….sqlite`); die letzten 8 bleiben erhalten. Im Tab **Verwaltung → Sicherung** steht,
 wann die letzte Kopie entstanden ist. Intervall und Anzahl lassen sich in `lib/config.php` ändern
 (`'backup_days'`, `'backup_keep'`, siehe `config.sample.php`; `'backup_days' => 0` schaltet es ab).
 

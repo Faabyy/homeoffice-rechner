@@ -7,6 +7,17 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-13 – Tabs übersichtlicher: Verwaltung, einklappbare Abschnitte, Feedback-Knopf
+
+Upload-Ordner: `update-uebersicht/`
+
+- Tab „Benutzer“ heißt jetzt „Verwaltung“ (intern weiter `data-tab="benutzer"`), der Zähler „Verwaltung (n)“.
+- Einstellungen: „Hilfe & Kontakt“ und „Vorschlag oder Fehler melden“ sind ein Abschnitt „Hilfe & Rückmeldung“.
+  Als einklappbare Abschnitte (`<details class="fold">`, bei jedem Besuch zu): Passwort ändern, Daten, Hilfe & Rückmeldung;
+  in der Verwaltung: Offene Links, Protokoll, Sicherung. Chevron und Abstände in allen drei Designs.
+- Neuer Knopf „Feedback“ oben rechts (`#feedback-btn`, `openFeedback()` in `app.js`): wechselt zu Einstellungen, klappt den
+  Abschnitt auf und setzt den Cursor ins Nachrichtenfeld.
+
 ## 2026-10-13 – Vorschläge und Fehler melden
 
 Upload-Ordner: `update-rueckmeldungen/`

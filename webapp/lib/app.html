@@ -30,6 +30,7 @@
     <div class="account">
       <label id="owner-box" class="owner-box" hidden>Ansicht von <select id="owner-select"></select></label>
       <span id="user-name"></span>
+      <button type="button" id="feedback-btn" class="link">Feedback</button>
       <button type="button" id="news-btn" class="link">Neuigkeiten</button>
       <button type="button" id="logout" class="link">Abmelden</button>
     </div>
@@ -45,7 +46,7 @@
         <button type="button" role="tab" data-tab="planung">Planung</button>
         <button type="button" role="tab" data-tab="zeiterfassung">Zeiterfassung</button>
         <button type="button" role="tab" data-tab="einstellungen">Einstellungen</button>
-        <button type="button" role="tab" data-tab="benutzer" hidden>Benutzer</button>
+        <button type="button" role="tab" data-tab="benutzer" hidden>Verwaltung</button>
       </nav>
 
       <div class="panel" id="tab-planung" role="tabpanel">
@@ -158,8 +159,8 @@
           <p class="hint">Gilt für diesen Browser.</p>
         </section>
 
-        <section class="section">
-          <h3>Passwort ändern</h3>
+        <details class="section fold">
+          <summary><h3>Passwort ändern</h3></summary>
           <form id="password-form" class="settings" novalidate>
             <div class="settings-grid">
               <label class="label" for="p-current">Aktuelles Passwort</label>
@@ -174,10 +175,10 @@
               <span id="password-status" class="status" role="status"></span>
             </div>
           </form>
-        </section>
+        </details>
 
-        <section class="section edit-only">
-          <h3>Daten</h3>
+        <details class="section edit-only fold">
+          <summary><h3>Daten</h3></summary>
           <div class="form-actions">
             <button type="button" id="export-btn">Exportieren</button>
             <label class="button" for="import-file">Importieren …</label>
@@ -186,10 +187,10 @@
           </div>
           <p class="hint">Beim Import werden deine aktuellen Daten ersetzt.</p>
           <p id="viewers-info" class="hint"></p>
-        </section>
+        </details>
 
-        <section class="section">
-          <h3>Hilfe &amp; Kontakt</h3>
+        <details class="section fold" id="help-section">
+          <summary><h3>Hilfe &amp; Rückmeldung</h3></summary>
           <p class="hint">Das erledigt ein Admin:</p>
           <ul class="hint help-list">
             <li class="edit-only">Lesezugriff für andere (z. B. deine Führungskraft) einrichten oder entfernen</li>
@@ -197,10 +198,8 @@
             <li>Personen einladen, Passwort-Links, Konten löschen</li>
           </ul>
           <p id="admin-contacts" class="hint"></p>
-        </section>
 
-        <section class="section">
-          <h3>Vorschlag oder Fehler melden</h3>
+          <h4 class="subhead">Vorschlag oder Fehler melden</h4>
           <form id="feedback-form" class="settings" novalidate>
             <div class="settings-grid">
               <label class="label" for="f-kind">Art</label>
@@ -219,10 +218,10 @@
             </div>
           </form>
           <div id="my-feedback" class="feedback-list" hidden>
-            <h4>Deine Rückmeldungen</h4>
+            <h4 class="subhead">Deine Rückmeldungen</h4>
             <div id="my-feedback-list" class="feedback-list"></div>
           </div>
-        </section>
+        </details>
       </div>
 
       <div class="panel" id="tab-benutzer" role="tabpanel" hidden>
@@ -277,7 +276,8 @@
           <p id="no-users" class="empty" hidden>Keine passenden Konten.</p>
         </div>
 
-        <h3 class="section">Offene Links</h3>
+        <details class="section fold">
+          <summary><h3>Offene Links</h3></summary>
         <div class="table-card">
           <table class="entries">
             <thead><tr><th>Benutzername</th><th>Art</th><th>Gültig bis</th><th></th></tr></thead>
@@ -285,8 +285,10 @@
           </table>
           <p id="no-links" class="empty" hidden>Keine offenen Einladungen oder Passwort-Links.</p>
         </div>
+        </details>
 
-        <h3 class="section">Protokoll</h3>
+        <details class="section fold">
+          <summary><h3>Protokoll</h3></summary>
         <div class="table-card log-card">
           <table class="entries">
             <thead><tr><th>Zeit</th><th>Admin</th><th>Aktion</th><th>Konto</th><th>Details</th></tr></thead>
@@ -294,9 +296,12 @@
           </table>
           <p id="no-log" class="empty" hidden>Noch keine Admin-Aktionen.</p>
         </div>
+        </details>
 
-        <h3 class="section">Sicherung</h3>
-        <p id="backup-info" class="hint"></p>
+        <details class="section fold">
+          <summary><h3>Sicherung</h3></summary>
+          <p id="backup-info" class="hint"></p>
+        </details>
       </div>
     </section>
 

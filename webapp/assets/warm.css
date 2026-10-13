@@ -414,7 +414,7 @@ body:not(.read-only) .viewer-only { display: none !important; }
 .w-text { width: 32em; max-width: 100%; resize: vertical; }
 .settings-grid .label[for="f-message"] { align-self: start; padding-top: 4px; }
 
-/* feedback inbox (Benutzer tab) */
+/* feedback inbox (Verwaltung tab) */
 .feedback-list { display: flex; flex-direction: column; gap: 10px; }
 .feedback { padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; }
 .feedback.is-new { border-left: 4px solid var(--accent); }
@@ -426,7 +426,16 @@ body:not(.read-only) .viewer-only { display: none !important; }
 .feedback .form-actions { margin-top: 8px; flex-wrap: wrap; }
 .feedback-state { background: var(--highlight); color: var(--text); }
 #my-feedback { margin-top: 24px; }
-#my-feedback h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+#my-feedback .subhead { margin-top: 0; }
+/* collapsible sections: <details class="fold"><summary><h3>…</h3></summary>…</details> */
+.fold > summary { cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fold > summary h3::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--muted); font-size: .8em; }
+.fold[open] > summary h3::before { content: "▾"; }
+.fold:not([open]) > summary h3 { margin-bottom: 0; }
+.subhead { font-size: 13px; font-weight: 600; margin: 24px 0 8px; }
+
 .w-link { width: 32em; max-width: 100%; }
 .link-box { margin-top: 12px; padding: 12px; background: var(--highlight); border-radius: 6px; }
 .link-box p { margin: 0 0 8px; }
@@ -447,7 +456,7 @@ body:not(.read-only) .viewer-only { display: none !important; }
 .checks .bad { color: var(--bad); font-weight: 600; }
 .checks .warn { color: var(--muted); }
 
-/* ---- account management (tab Benutzer) ---- */
+/* ---- account management (tab Verwaltung) ---- */
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
 .entries tr.clickable { cursor: pointer; }

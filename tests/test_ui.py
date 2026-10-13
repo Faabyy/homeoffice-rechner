@@ -427,9 +427,13 @@ class UiTest(unittest.TestCase):
         link = admin.api("admin-invite", {"username": "anna@example.org"})[1]["link"]
         Client(self.server).api("redeem", {"token": link.split("token=")[1], "password": "passwort-123"})
 
-        # Anna writes a report in Einstellungen
+        # Anna writes a report: the header button opens Einstellungen with the section unfolded and the cursor in the text field
         self.login("anna@example.org", "passwort-123")
-        self.js("document.querySelector('[data-tab=einstellungen]').click()")
+        self.assertFalse(self.js("document.getElementById('help-section').open"))
+        self.js("document.getElementById('feedback-btn').click()")
+        self.assertEqual(self.js("document.body.dataset.tab"), "einstellungen")
+        self.assertTrue(self.js("document.getElementById('help-section').open"))
+        self.assertEqual(self.js("document.activeElement.id"), "f-message")
         self.js("document.getElementById('f-kind').value = 'bug';"
                 "document.getElementById('f-message').value = 'ab';"
                 "document.getElementById('feedback-form').requestSubmit()")
@@ -444,13 +448,13 @@ class UiTest(unittest.TestCase):
         # the admin sees "(1)" behind the tab and the text in the inbox
         self.js("fetch('api.php?action=logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})")
         self.login("admin@example.org", "geheim12345")
-        b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Benutzer (1)'")
+        b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Verwaltung (1)'")
         self.js("document.querySelector('[data-tab=benutzer]').click()")
         b.wait_for("document.querySelectorAll('.feedback').length === 1")
         self.assertIn("Der Kalender springt", self.js("document.querySelector('.feedback-text').textContent"))
         self.assertIn("anna@example.org", self.js("document.querySelector('.feedback-head').textContent"))
         self.js("[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Gelesen').click()")
-        b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Benutzer'")
+        b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Verwaltung'")
         self.js("window.confirm = () => true;"
                 "[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Erledigt').click()")
         b.wait_for("document.querySelectorAll('.feedback').length === 0")

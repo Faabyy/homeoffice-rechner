@@ -56,7 +56,7 @@ body:not(:has(.topbar)) { padding-top: env(safe-area-inset-top); } /* login and 
   .account { grid-column: 2; grid-row: 1; gap: 0; }
   .account button.link { padding-inline: 4px; }
   .account:has(.owner-box:not([hidden])) { grid-column: 1 / -1; grid-row: 3; flex-wrap: wrap; }
-  #user-email { display: none; } /* no room next to the title */
+  #user-name { display: none; } /* no room next to the title and the account links */
   .month-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; }
   .month-nav h2 { flex: 1; min-width: 0; }
 

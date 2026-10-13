@@ -16,7 +16,7 @@ Prüfung gegen eine monatliche Homeoffice-Grenze (Standard: höchstens 30 % der 
 - Automatische Datensicherung (SQLite) und Export/Import der eigenen Daten als JSON
 - Drei Designs (Modern, Klassisch, Warm), jeweils hell oder dunkel
 - „Neuigkeiten“-Fenster nach Updates
-- Vorschläge und Fehler direkt in der App melden; Admins sehen sie im Tab „Benutzer“, ein Zähler zeigt neue an
+- Vorschläge und Fehler direkt in der App melden; Admins sehen sie im Tab „Verwaltung“, ein Zähler zeigt neue an
 - Auf Android und iPhone als App installierbar (Web-App, ohne App-Store)
 
 ## Screenshots

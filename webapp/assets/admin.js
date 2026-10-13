@@ -1,6 +1,6 @@
 "use strict";
 
-// Administration (Benutzer tab): account list and detail dialog, invitations, admin log, backup
+// Administration (Verwaltung tab): account list and detail dialog, invitations, admin log, backup
 // status. Loaded by app.js (openAdminTab) when an admin opens the tab for the first time, and
 // shares its globals ($, el, api, state, Logic, plural, …).
 

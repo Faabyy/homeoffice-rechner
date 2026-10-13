@@ -9,6 +9,15 @@
 
 const CHANGELOG = [
   {
+    id: "2026-10-13-uebersicht",
+    date: "2026-10-13",
+    title: "Übersichtlicher und Feedback-Knopf",
+    items: [
+      "Oben rechts gibt es den Knopf „Feedback“: Er führt direkt zum Formular für Vorschläge und Fehler.",
+      "In den Einstellungen sind Passwort, Daten und Hilfe & Rückmeldung jetzt einklappbar, damit die Seite kürzer ist.",
+    ],
+  },
+  {
     id: "2026-10-13-rueckmeldungen",
     date: "2026-10-13",
     title: "Vorschläge und Fehler melden",

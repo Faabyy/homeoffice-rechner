@@ -926,9 +926,9 @@ async function deleteFlex(item) {
 
 // ---- feedback ---------------------------------------------------------------------------
 
-/** Show the number of new reports behind the Benutzer tab: "Benutzer (1)". */
+/** Show the number of new reports behind the Verwaltung tab: "Verwaltung (1)". */
 function showNewFeedback(count) {
-  document.querySelector('.tabs [data-tab="benutzer"]').textContent = count > 0 ? `Benutzer (${count})` : "Benutzer";
+  document.querySelector('.tabs [data-tab="benutzer"]').textContent = count > 0 ? `Verwaltung (${count})` : "Verwaltung";
 }
 
 // what the sender sees for the admins' statuses (admin.js has its own labels)
@@ -950,6 +950,14 @@ async function loadMyFeedback() {
   } catch { /* the list is only a convenience */ }
 }
 
+/** The "Feedback" button in the header: straight to the form, with the section opened. */
+function openFeedback() {
+  switchTab("einstellungen");
+  $("help-section").open = true;
+  $("feedback-form").scrollIntoView({ block: "start" });
+  $("f-message").focus({ preventScroll: true });
+}
+
 async function sendFeedback(event) {
   event.preventDefault();
   const status = $("feedback-status");
@@ -967,7 +975,7 @@ async function sendFeedback(event) {
   status.textContent = "Danke, die Nachricht ist angekommen ✓";
 }
 
-// ---- administration (assets/admin.js, loaded when an admin first opens the Benutzer tab) ----
+// ---- administration (assets/admin.js, loaded when an admin first opens the Verwaltung tab) ----
 
 let adminScript = null;
 // until admin.js has attached its handler, the form must not fall back to a native submit
@@ -1008,7 +1016,7 @@ function adminLinks() {
 
 function renderHelp() {
   const contacts = $("admin-contacts");
-  if (state.user.isAdmin) contacts.replaceChildren("Du bist selbst Admin (Tab Benutzer).");
+  if (state.user.isAdmin) contacts.replaceChildren("Du bist selbst Admin (Tab Verwaltung).");
   else if (state.account.admins.length) contacts.replaceChildren("Admins: ", ...adminLinks());
   else contacts.replaceChildren("Es ist noch kein Admin eingetragen.");
   if (!state.user.isAdmin && state.account.admins.length) {
@@ -1083,6 +1091,7 @@ function switchTab(name) {
   if (!available.includes(name)) name = available[0];
   for (const button of document.querySelectorAll(".tabs button")) {
     button.setAttribute("aria-selected", String(button.dataset.tab === name));
+    if (button.dataset.tab === name) button.scrollIntoView({ inline: "nearest", block: "nearest" }); // tabs scroll sideways on narrow phones
   }
   for (const tab of TABS) $(`tab-${tab}`).hidden = tab !== name;
   document.body.dataset.tab = name; // mobile.css hides the summary on some tabs
@@ -1109,6 +1118,7 @@ async function init() {
   $("settings-form").addEventListener("submit", saveSettings);
   $("password-form").addEventListener("submit", changePassword);
   $("feedback-form").addEventListener("submit", sendFeedback);
+  $("feedback-btn").addEventListener("click", openFeedback);
   $("flex-form").addEventListener("submit", addFlex);
   $("export-btn").addEventListener("click", exportData);
   $("import-file").addEventListener("change", importData);
