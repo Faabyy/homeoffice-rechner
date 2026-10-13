@@ -7,6 +7,24 @@ und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `web
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
+## 2026-10-13 – Antworten auf Rückmeldungen, Benachrichtigung in den Neuigkeiten
+
+Upload-Ordner: `update-antworten/`
+
+- Tabelle `feedback`: neue Spalten `reply`, `replied_at`, `done_at`, `notify` (`SCHEMA_VERSION` 4; die Spalten kommen beim
+  ersten Aufruf per `ALTER TABLE`, bestehende Rückmeldungen bleiben). `notify = 1` heißt: der Absender hat die letzte
+  Antwort bzw. das „Erledigt“ noch nicht gesehen.
+- `lib/feedback.php`: `update_feedback()` ersetzt `set_feedback_status()`; `admin-feedback-status` nimmt `status` und/oder
+  `reply` (leer = Antwort zurücknehmen). Antwort oder „Erledigt“ setzt `notify`, eine Antwort auf eine neue Rückmeldung
+  setzt sie auf „gelesen“, „Wieder öffnen“ löscht `done_at`. Neu: `POST feedback-seen` (`ids`, nur eigene Zeilen);
+  `GET my-feedback` liefert zusätzlich `id`, `reply`, `updatedAt`, `notify`.
+- Verwaltung: jede Rückmeldung hat ein Antwortfeld mit „Antworten“/„Antwort ändern“; „Erledigt“ und „Gelesen“ schicken eine
+  geänderte Antwort mit. „Offene als Text kopieren“ enthält die Antwort.
+- App: das Fenster „Neuigkeiten“ (`showNews()`) zeigt oben die Einträge zu eigenen Rückmeldungen mit Antwort oder Status
+  „erledigt“ (`ticketNews()`, höchstens 10), neue mit „Neu“. Es öffnet sich beim Start auch dann, wenn nur so etwas neu ist
+  (`maybeShowNews()`); beim Schließen geht `feedback-seen` raus. Die Liste in den Einstellungen zeigt die Antwort ebenfalls.
+- Tests: `test_feedback_reply_and_notification`, `test_older_feedback_table_gets_reply_columns`, `test_feedback` erweitert.
+
 ## 2026-10-13 – Tabs übersichtlicher: Verwaltung, einklappbare Abschnitte, Feedback-Knopf
 
 Upload-Ordner: `update-uebersicht/`

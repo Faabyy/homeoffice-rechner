@@ -236,7 +236,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual((status, len(data["entries"]), data["flex"]), (200, 1, []))
         self.assertEqual(self.admin.api("flex", {"day": "2026-09-30", "minutes": -20, "note": ""})[0], 200)
         conn = sqlite3.connect(db)
-        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 3)
+        self.assertEqual(conn.execute("SELECT v FROM schema_meta WHERE k = 'version'").fetchone()[0], 4)
         names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'index'")}
         self.assertLessEqual({"sessions_expires", "sessions_user", "login_failures_at"}, names)
         conn.close()
@@ -316,6 +316,68 @@ class ApiTest(unittest.TestCase):
         _, users = self.admin.api("admin-overview")
         self.admin.api("admin-delete-user", {"id": next(u["id"] for u in users["users"] if u["username"].startswith("kollegin"))})
         self.assertEqual(len(self.admin.api("admin-overview")[1]["feedback"]), 1)
+
+    def test_feedback_reply_and_notification(self):
+        user, _ = self.invite_user()
+        other, _ = self.invite_user("zweite@example.org", "zweite-pw-12")
+        user.api("feedback", {"kind": "bug", "message": "Der Kalender springt."})
+        user.api("feedback", {"kind": "idea", "message": "Dunkelmodus bitte."})
+        fid, idea = [f["id"] for f in self.admin.api("admin-overview")[1]["feedback"]][::-1]
+        self.assertFalse(any(f["notify"] for f in user.api("my-feedback")[1]["feedback"]))
+
+        # nothing to change / invalid / only admins
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": fid})[0], 400)
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": fid, "reply": "x" * 2001})[0], 400)
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": 9999, "reply": "Hallo"})[0], 404)
+        self.assertEqual(user.api("admin-feedback-status", {"id": fid, "reply": "Hallo"})[0], 403)
+
+        # a reply notifies the sender, marks a new report as read, and is shown to admins
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": fid, "reply": "  Danke, schauen wir uns an. "})[0], 200)
+        mine = {f["id"]: f for f in user.api("my-feedback")[1]["feedback"]}
+        self.assertEqual((mine[fid]["reply"], mine[fid]["status"], mine[fid]["notify"]), ("Danke, schauen wir uns an.", "read", True))
+        self.assertIsNotNone(mine[fid]["updatedAt"])
+        self.assertFalse(mine[idea]["notify"])
+        shown = {f["id"]: f for f in self.admin.api("admin-overview")[1]["feedback"]}
+        self.assertEqual((shown[fid]["reply"], shown[fid]["status"]), ("Danke, schauen wir uns an.", "read"))
+        self.assertEqual(other.api("my-feedback")[1]["feedback"], [])
+
+        # only the sender can mark it as seen; ids of others are ignored
+        self.assertEqual(other.api("feedback-seen", {"ids": [fid]})[0], 200)
+        self.assertTrue(user.api("my-feedback")[1]["feedback"][1]["notify"])
+        self.assertEqual(user.api("feedback-seen", {"ids": [fid]})[0], 200)
+        self.assertFalse(any(f["notify"] for f in user.api("my-feedback")[1]["feedback"]))
+
+        # done notifies again, with or without a reply; reopening does not
+        self.admin.api("admin-feedback-status", {"id": idea, "status": "done"})
+        self.admin.api("admin-feedback-status", {"id": fid, "status": "done", "reply": "Behoben."})
+        mine = {f["id"]: f for f in user.api("my-feedback")[1]["feedback"]}
+        self.assertEqual([(mine[i]["status"], mine[i]["notify"]) for i in (idea, fid)], [("done", True)] * 2)
+        self.assertEqual(mine[fid]["reply"], "Behoben.")
+        user.api("feedback-seen", {"ids": [fid, idea]})
+        self.admin.api("admin-feedback-status", {"id": idea, "status": "read"})
+        mine = {f["id"]: f for f in user.api("my-feedback")[1]["feedback"]}
+        self.assertEqual((mine[idea]["status"], mine[idea]["notify"], mine[idea]["updatedAt"]), ("read", False, None))
+
+        # an empty reply takes the answer back
+        self.admin.api("admin-feedback-status", {"id": fid, "reply": ""})
+        self.assertIsNone({f["id"]: f for f in user.api("my-feedback")[1]["feedback"]}[fid]["reply"])
+
+    def test_older_feedback_table_gets_reply_columns(self):
+        user, _ = self.invite_user()
+        db = next(Path(self.server.tmp.name).glob("*.sqlite"))
+        conn = sqlite3.connect(db)
+        conn.execute("DROP TABLE feedback")  # the table as it was in schema version 3
+        conn.execute("""CREATE TABLE feedback (id INTEGER PRIMARY KEY, user_id INT NOT NULL, username VARCHAR(254) NOT NULL,
+            created_at INT NOT NULL, kind VARCHAR(10) NOT NULL, message TEXT NOT NULL, page VARCHAR(20) NOT NULL,
+            agent VARCHAR(250) NOT NULL, status VARCHAR(10) NOT NULL)""")
+        conn.execute("INSERT INTO feedback VALUES (1, 2, 'kollegin@example.org', 1, 'bug', 'Alt', '', '', 'new')")
+        conn.execute("UPDATE schema_meta SET v = 3 WHERE k = 'version'")
+        conn.commit()
+        conn.close()
+        mine = user.api("my-feedback")[1]["feedback"]  # first request migrates
+        self.assertEqual((mine[0]["message"], mine[0]["reply"], mine[0]["notify"]), ("Alt", None, False))
+        self.assertEqual(self.admin.api("admin-feedback-status", {"id": 1, "reply": "Neu"})[0], 200)
+        self.assertTrue(user.api("my-feedback")[1]["feedback"][0]["notify"])
 
     def test_feedback_limit_per_hour(self):
         user, _ = self.invite_user()

@@ -1,5 +1,6 @@
 """End-to-end test of the web UI in a headless browser against the PHP dev server."""
 
+import time
 import unittest
 
 from tests.support import Browser, Client, PhpServer
@@ -22,13 +23,14 @@ class UiTest(unittest.TestCase):
     def js(self, expression):
         return self.browser.js(expression)
 
-    def login(self, email, password):
+    def login(self, email, password, keep_news=False):
         self.browser.goto(self.server.base + "login.php")
         self.js(f"document.getElementById('username').value = '{email}';"
                 f"document.getElementById('password').value = '{password}';"
                 "document.getElementById('login-form').requestSubmit()")
         self.browser.wait_for("location.pathname === '/' && !!document.querySelector('.day')")
-        self.js("document.getElementById('news-dialog').close()")  # "what's new" depends on today's date
+        if not keep_news:
+            self.js("document.getElementById('news-dialog').close()")  # "what's new" depends on today's date
 
     def test_full_flow(self):
         b = self.browser
@@ -455,6 +457,7 @@ class UiTest(unittest.TestCase):
         self.assertIn("anna@example.org", self.js("document.querySelector('.feedback-head').textContent"))
         self.js("[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Gelesen').click()")
         b.wait_for("document.querySelector('.tabs [data-tab=benutzer]').textContent === 'Verwaltung'")
+        self.js("document.querySelector('.feedback textarea').value = 'Ist behoben, danke für den Hinweis.'")
         self.js("window.confirm = () => true;"
                 "[...document.querySelectorAll('.feedback button')].find(x => x.textContent === 'Erledigt').click()")
         b.wait_for("document.querySelectorAll('.feedback').length === 0")
@@ -462,8 +465,28 @@ class UiTest(unittest.TestCase):
 
         # Anna sees the new status after the next start
         self.js("fetch('api.php?action=logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})")
-        self.login("anna@example.org", "passwort-123")
+        self.login("anna@example.org", "passwort-123", keep_news=True)
         b.wait_for("document.getElementById('my-feedback-list').textContent.includes('Erledigt')")
+        self.assertIn("Ist behoben", self.js("document.getElementById('my-feedback-list').textContent"))
+
+        # the news dialog opens by itself and starts with the news about the report
+        self.assertTrue(self.js("document.getElementById('news-dialog').open"))
+        first = self.js("document.querySelector('#news-list .news').textContent")
+        self.assertIn("Dein Fehler ist erledigt", first)
+        self.assertIn("Der Kalender springt", first)
+        self.assertIn("Ist behoben, danke für den Hinweis.", first)
+        self.assertTrue(self.js("document.querySelector('#news-list .news').classList.contains('new')"))
+        self.js("document.getElementById('news-dialog').close()")
+        time.sleep(0.5)  # the "seen" request is sent in the background
+
+        # closing it counts as seen: the next start does not open it again, the button still shows the history
+        self.js("fetch('api.php?action=logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})")
+        self.login("anna@example.org", "passwort-123", keep_news=True)
+        b.wait_for("document.getElementById('my-feedback-list').textContent.includes('Erledigt')")
+        self.assertFalse(self.js("document.getElementById('news-dialog').open"))
+        self.js("document.getElementById('news-btn').click()")
+        self.assertIn("Dein Fehler ist erledigt", self.js("document.querySelector('#news-list .news').textContent"))
+        self.assertFalse(self.js("document.querySelector('#news-list .news').classList.contains('new')"))
         self.assertEqual(b.errors, [])
 
 

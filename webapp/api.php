@@ -108,6 +108,9 @@ function handle_api(string $method, string $action, array $body)
         case 'POST feedback':
             save_feedback($user, $body);
             return ['feedback' => my_feedback($uid)];
+        case 'POST feedback-seen':
+            mark_feedback_seen($uid, $body['ids'] ?? null);
+            return ['ok' => true];
         case 'GET my-feedback':
             return ['feedback' => my_feedback($uid)];
         case 'POST password':
@@ -190,7 +193,7 @@ function handle_api(string $method, string $action, array $body)
                 set_owner_access($user, $id, $body['viewers'] ?? null);
                 return ['ok' => true];
             case 'POST admin-feedback-status':
-                set_feedback_status($id, $body['status'] ?? null);
+                update_feedback($id, $body['status'] ?? null, $body['reply'] ?? null);
                 return ['newFeedback' => new_feedback_count()];
             case 'POST admin-feedback-delete':
                 delete_feedback($id);

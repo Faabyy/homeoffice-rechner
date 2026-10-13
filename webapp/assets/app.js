@@ -44,6 +44,7 @@ const state = {
   year: now.getFullYear(),
   month: now.getMonth() + 1,
   user: null,
+  myFeedback: [], // own reports (GET my-feedback), also the source of the ticket news in the news dialog
   account: { createdAt: null, admins: [] }, // from `me`: account creation date, admin usernames
   data: null,           // {settings, entries, plan} of the logged-in user (read-only account: of the viewed one)
   readOnly: false,      // read-only account: no own data, only views accounts assigned by an admin
@@ -935,19 +936,21 @@ function showNewFeedback(count) {
 const MY_FEEDBACK_STATUS = { new: "Eingegangen", read: "Gelesen", done: "Erledigt" };
 
 function renderMyFeedback(list) {
+  state.myFeedback = list;
   $("my-feedback").hidden = list.length === 0;
   $("my-feedback-list").replaceChildren(...list.map((f) => el("article", { class: `feedback${f.status === "done" ? " is-done" : ""}` },
     el("div", { class: "feedback-head" },
       el("strong", {}, f.kind === "bug" ? "Fehler" : "Vorschlag"),
       el("span", {}, `${Logic.germanDate(f.at.slice(0, 10))} ${f.at.slice(11)}`),
       el("span", { class: `badge ${f.status === "new" ? "new-badge" : "feedback-state"}` }, MY_FEEDBACK_STATUS[f.status])),
-    el("p", { class: "feedback-text" }, f.message))));
+    el("p", { class: "feedback-text" }, f.message),
+    f.reply ? el("p", { class: "feedback-reply" }, el("strong", {}, "Antwort: "), f.reply) : null)));
 }
 
 async function loadMyFeedback() {
   try {
     renderMyFeedback((await api("my-feedback")).feedback);
-  } catch { /* the list is only a convenience */ }
+  } catch { /* the list is only a convenience; without it there is no news about reports either */ }
 }
 
 /** The "Feedback" button in the header: straight to the form, with the section opened. */
@@ -1051,30 +1054,60 @@ function markNewsSeen() {
   } catch { /* no storage */ }
 }
 
+/** News about the user's own reports: answered by an admin or done. */
+function ticketNews() {
+  return state.myFeedback.filter((f) => f.status === "done" || f.reply).slice(0, 10);
+}
+
+function ticketTitle(f) {
+  const kind = f.kind === "bug" ? "Fehler" : "Vorschlag";
+  return f.status === "done" ? `Dein ${kind} ist erledigt ✓` : `Antwort zu deinem ${kind}`;
+}
+
+function ticketArticle(f) {
+  const quote = f.message.length > 140 ? `${f.message.slice(0, 140)} …` : f.message;
+  return el("article", { class: f.notify ? "news new" : "news" },
+    el("h4", {}, f.notify ? el("span", { class: "badge new-badge" }, "Neu") : null, ticketTitle(f),
+      f.updatedAt ? el("span", { class: "date" }, Logic.germanDate(f.updatedAt.slice(0, 10))) : null),
+    el("p", { class: "ticket-quote" }, `„${quote}“`),
+    f.reply ? el("p", { class: "ticket-reply" }, el("strong", {}, "Antwort: "), f.reply) : null);
+}
+
 function showNews(unseen = []) {
   const entries = CHANGELOG;
-  $("news-list").replaceChildren(...entries.map((entry) => el("article", { class: unseen.includes(entry.id) ? "news new" : "news" },
-    el("h4", {}, unseen.includes(entry.id) ? el("span", { class: "badge new-badge" }, "Neu") : null,
-      entry.title, el("span", { class: "date" }, Logic.germanDate(entry.date))),
-    el("ul", {}, ...entry.items.map((item) => el("li", {}, item))),
-    entry.ask && !state.user.isAdmin ? el("p", { class: "ask" }, entry.ask) : null)));
+  const tickets = ticketNews();
+  $("news-list").replaceChildren(
+    ...tickets.map(ticketArticle),
+    ...entries.map((entry) => el("article", { class: unseen.includes(entry.id) ? "news new" : "news" },
+      el("h4", {}, unseen.includes(entry.id) ? el("span", { class: "badge new-badge" }, "Neu") : null,
+        entry.title, el("span", { class: "date" }, Logic.germanDate(entry.date))),
+      el("ul", {}, ...entry.items.map((item) => el("li", {}, item))),
+      entry.ask && !state.user.isAdmin ? el("p", { class: "ask" }, entry.ask) : null)));
   $("news-contacts").replaceChildren(...(state.user.isAdmin || !state.account.admins.length ? []
     : ["Fragen oder Wünsche? Admins: ", ...adminLinks()]));
   $("news-dialog").showModal();
   $("news-list").scrollTop = 0;
 }
 
-/** After login: open the dialog once when there is something new. */
+/** After login: open the dialog once when there is something new (news or answered feedback). */
 function maybeShowNews() {
   const unseen = unseenNews(CHANGELOG);
-  if (unseen === undefined) return;
-  if (unseen.length) showNews(unseen);
-  else markNewsSeen();
+  const answered = state.myFeedback.some((f) => f.notify);
+  if (answered || (unseen !== undefined && unseen.length)) showNews(unseen || []);
+  else if (unseen !== undefined) markNewsSeen();
+}
+
+/** The sender has been shown the news about the reports: they are no longer "new". */
+function markTicketsSeen() {
+  const ids = state.myFeedback.filter((f) => f.notify).map((f) => f.id);
+  if (!ids.length) return;
+  api("feedback-seen", { ids }).catch(() => {}); // at worst the dialog shows them once more
+  renderMyFeedback(state.myFeedback.map((f) => (ids.includes(f.id) ? { ...f, notify: false } : f)));
 }
 
 function setupNews() {
   $("news-btn").addEventListener("click", () => showNews());
-  $("news-dialog").addEventListener("close", markNewsSeen);
+  $("news-dialog").addEventListener("close", () => { markNewsSeen(); markTicketsSeen(); });
 }
 
 // ---- tabs & startup -------------------------------------------------------------
@@ -1134,7 +1167,7 @@ async function init() {
     state.user = me.user;
     state.account = { createdAt: me.createdAt, admins: me.admins };
     showNewFeedback(me.newFeedback || 0);
-    loadMyFeedback();
+    await loadMyFeedback(); // before the news dialog, which also reports on answered feedback
     renderHelp();
     if (state.user.isViewer) {
       await initReadOnly();

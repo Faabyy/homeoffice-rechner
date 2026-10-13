@@ -85,8 +85,10 @@ stehen im **Protokoll** unten im Tab. Wer Fragen hat, findet die Admins in der A
 (Art: Vorschlag oder Fehler, höchstens 2000 Zeichen, höchstens 5 pro Stunde). Die App verschickt dazu keine
 E-Mail: Die Nachrichten stehen bei den Admins im Tab **Verwaltung** unter *Rückmeldungen*, mit Benutzername,
 Zeit, Tab und Browser. Hinter dem Tab steht **Verwaltung (n)**, solange n Rückmeldungen neu sind. Jede lässt sich als
-gelesen oder erledigt markieren oder löschen; *Offene als Text kopieren* kopiert alle offenen zum Weitergeben.
-Die Absender sehen ihre eigenen Rückmeldungen mit dem Stand (eingegangen, gelesen, erledigt) unter dem Formular;
+gelesen oder erledigt markieren oder löschen und mit einer **Antwort** versehen; *Offene als Text kopieren* kopiert alle offenen zum Weitergeben.
+Antwortest du oder markierst du eine Rückmeldung als erledigt, erscheint beim Absender beim nächsten Start der App das
+Fenster *Neuigkeiten* mit einem Eintrag „Dein Fehler/Vorschlag ist erledigt“ und deiner Antwort (einmal; danach steht der
+Eintrag weiter ohne „Neu“ in den Neuigkeiten). Die Absender sehen ihre eigenen Rückmeldungen mit dem Stand (eingegangen, gelesen, erledigt) unter dem Formular;
 löscht ein Admin eine Rückmeldung, verschwindet sie auch dort. Beim Löschen eines Kontos bleiben seine Rückmeldungen erhalten. Neue Tabelle `feedback` (wird beim ersten
 Aufruf automatisch angelegt).
 

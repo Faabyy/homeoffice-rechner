@@ -9,6 +9,15 @@
 
 const CHANGELOG = [
   {
+    id: "2026-10-13-antworten",
+    date: "2026-10-13",
+    title: "Antworten auf deine Rückmeldungen",
+    items: [
+      "Wenn ein Admin auf einen Vorschlag oder Fehler antwortet oder ihn als erledigt markiert, erfährst du es hier: "
+        + "Die Neuigkeiten öffnen sich beim nächsten Start und zeigen deine Rückmeldung mit der Antwort ganz oben.",
+    ],
+  },
+  {
     id: "2026-10-13-uebersicht",
     date: "2026-10-13",
     title: "Übersichtlicher und Feedback-Knopf",

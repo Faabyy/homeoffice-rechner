@@ -65,35 +65,46 @@ function feedbackShown() {
 
 function feedbackText(f) {
   const where = f.page ? ` · Tab ${f.page}` : "";
-  return `${FEEDBACK_KINDS[f.kind]} von ${f.username}, ${germanDateTime(f.at)}${where}\n${f.message}`;
+  return `${FEEDBACK_KINDS[f.kind]} von ${f.username}, ${germanDateTime(f.at)}${where}\n${f.message}${f.reply ? `\nAntwort: ${f.reply}` : ""}`;
 }
 
 function renderFeedback() {
   const list = feedbackShown();
   const open = admin.overview.feedback.filter((f) => f.status !== "done").length;
   const button = (label, onclick) => el("button", { type: "button", onclick }, label);
-  $("feedback-list").replaceChildren(...list.map((f) => el("article", { class: `feedback is-${f.status}` },
-    el("div", { class: "feedback-head" },
-      el("strong", {}, FEEDBACK_KINDS[f.kind]), el("span", {}, f.username), el("span", {}, germanDateTime(f.at)),
-      f.status === "new" ? el("span", { class: "badge new-badge" }, "Neu") : f.status === "done" ? el("span", {}, "Erledigt") : null),
-    el("p", { class: "feedback-text" }, f.message),
-    f.page || f.agent ? el("p", { class: "feedback-meta" }, [f.page && `Tab: ${f.page}`, f.agent].filter(Boolean).join(" · ")) : null,
-    el("div", { class: "form-actions" },
-      f.status === "new" ? button("Gelesen", () => feedbackAction("admin-feedback-status", f.id, "read")) : null,
-      f.status === "done" ? button("Wieder öffnen", () => feedbackAction("admin-feedback-status", f.id, "read"))
-        : button("Erledigt", () => feedbackAction("admin-feedback-status", f.id, "done")),
-      button("Löschen", () => {
-        if (window.confirm("Diese Rückmeldung endgültig löschen?")) feedbackAction("admin-feedback-delete", f.id);
-      })),
-  )));
+  $("feedback-list").replaceChildren(...list.map((f) => {
+    const reply = el("textarea", { rows: 2, maxLength: 2000, class: "w-text", value: f.reply || "", "aria-label": `Antwort an ${f.username}`,
+      placeholder: `Antwort an ${f.username} (optional) – erscheint bei der Person in den Neuigkeiten` });
+    // only a changed text is sent along with a status change
+    const typed = () => (reply.value.trim() !== (f.reply || "") ? reply.value : undefined);
+    const act = (status, payload = {}) => feedbackAction("admin-feedback-status", { id: f.id, status, ...payload });
+    return el("article", { class: `feedback is-${f.status}` },
+      el("div", { class: "feedback-head" },
+        el("strong", {}, FEEDBACK_KINDS[f.kind]), el("span", {}, f.username), el("span", {}, germanDateTime(f.at)),
+        f.status === "new" ? el("span", { class: "badge new-badge" }, "Neu") : f.status === "done" ? el("span", {}, "Erledigt") : null,
+        f.repliedAt ? el("span", {}, `Antwort gesendet ${germanDateTime(f.repliedAt)}`) : null),
+      el("p", { class: "feedback-text" }, f.message),
+      f.page || f.agent ? el("p", { class: "feedback-meta" }, [f.page && `Tab: ${f.page}`, f.agent].filter(Boolean).join(" · ")) : null,
+      reply,
+      el("div", { class: "form-actions" },
+        button(f.repliedAt ? "Antwort ändern" : "Antworten", () => {
+          if (reply.value.trim() === (f.reply || "")) return reply.focus();
+          act(undefined, { reply: reply.value });
+        }),
+        f.status === "new" ? button("Gelesen", () => act("read", { reply: typed() })) : null,
+        f.status === "done" ? button("Wieder öffnen", () => act("read")) : button("Erledigt", () => act("done", { reply: typed() })),
+        button("Löschen", () => {
+          if (window.confirm("Diese Rückmeldung endgültig löschen?")) feedbackAction("admin-feedback-delete", { id: f.id });
+        })));
+  }));
   $("no-feedback").hidden = list.length > 0;
   $("f-copy").disabled = open === 0;
   $("f-count").textContent = open ? `${open} offen` : "";
 }
 
-async function feedbackAction(action, id, status) {
+async function feedbackAction(action, payload) {
   try {
-    await api(action, { id, status });
+    await api(action, payload);
   } catch (error) {
     window.alert(error.message);
   }

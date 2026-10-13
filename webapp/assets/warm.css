@@ -422,6 +422,9 @@ body:not(.read-only) .viewer-only { display: none !important; }
 .feedback-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13px; color: var(--muted); }
 .feedback-head strong { color: var(--text); }
 .feedback-text { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.feedback-reply, .ticket-reply { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.feedback textarea { display: block; margin-top: 8px; }
+.ticket-quote { margin: 0 0 4px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
 .feedback-meta { margin: 4px 0 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .feedback .form-actions { margin-top: 8px; flex-wrap: wrap; }
 .feedback-state { background: var(--highlight); color: var(--text); }

@@ -34,7 +34,7 @@ function db_driver(): string
 
 // Raise this whenever the schema changes below (new table, new column): databases with a lower
 // version run the migration once and are then marked as current.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function schema_version(PDO $pdo): int
 {
@@ -147,7 +147,11 @@ function ensure_schema(PDO $pdo): void
             message TEXT NOT NULL,
             page VARCHAR(20) NOT NULL,                  -- tab the report was written on
             agent VARCHAR(250) NOT NULL,                -- browser (User-Agent)
-            status VARCHAR(10) NOT NULL                 -- 'new', 'read' or 'done'
+            status VARCHAR(10) NOT NULL,                -- 'new', 'read' or 'done'
+            reply TEXT NULL,                            -- answer of an admin
+            replied_at INT NULL,
+            done_at INT NULL,                           -- set while status is 'done'
+            notify INT NOT NULL DEFAULT 0               -- 1 = the sender has not yet seen the latest reply / 'done'
         )$suffix", 'CREATE INDEX feedback_status ON feedback (status)'],
     ];
     // columns added after the first release: [table, column, definition]
@@ -155,6 +159,10 @@ function ensure_schema(PDO $pdo): void
         ['users', 'is_viewer', 'INT NOT NULL DEFAULT 0'],
         ['tokens', 'is_viewer', 'INT NOT NULL DEFAULT 0'],
         ['users', 'locked_at', 'INT NULL'],
+        ['feedback', 'reply', 'TEXT NULL'],
+        ['feedback', 'replied_at', 'INT NULL'],
+        ['feedback', 'done_at', 'INT NULL'],
+        ['feedback', 'notify', 'INT NOT NULL DEFAULT 0'],
     ];
     // indexes added after the first release: [name, table, columns]
     $indexes = [
