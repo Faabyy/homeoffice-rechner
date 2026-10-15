@@ -14,9 +14,8 @@
 /lokal/data/*
 !/lokal/data/.gitkeep
 
-# Upload packages, exports, Python cache, IDE files
+# Exports, Python cache, IDE files
 *.zip
-/update-*/
 *.json
 __pycache__/
 .idea/

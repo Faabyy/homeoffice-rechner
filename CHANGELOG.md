@@ -1,15 +1,13 @@
 # Changelog
 
-Alle Änderungen am Homeoffice-Rechner, neueste zuerst – technisch, für Betreiber und Entwicklung (mit Upload-Ordnern
-und Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `webapp/assets/changelog.js` (das
+Alle Änderungen am Homeoffice-Rechner, neueste zuerst – technisch, für Betreiber und Entwicklung (mit
+Datenbankänderungen). Für alle Nutzer verständlich steht dasselbe in `webapp/assets/changelog.js` (das
 „Neuigkeiten“-Fenster in der App) – beide Dateien zusammen pflegen.
 
 Hinweis: Die Einträge vor dem 05.10.2026 sind aus den Dateidaten rekonstruiert, die vom 05.10.2026 aus dem
 Sitzungsverlauf.
 
 ## 2026-10-13 – Antworten auf Rückmeldungen, Benachrichtigung in den Neuigkeiten
-
-Upload-Ordner: `update-antworten/`
 
 - Tabelle `feedback`: neue Spalten `reply`, `replied_at`, `done_at`, `notify` (`SCHEMA_VERSION` 4; die Spalten kommen beim
   ersten Aufruf per `ALTER TABLE`, bestehende Rückmeldungen bleiben). `notify = 1` heißt: der Absender hat die letzte
@@ -27,8 +25,6 @@ Upload-Ordner: `update-antworten/`
 
 ## 2026-10-13 – Tabs übersichtlicher: Verwaltung, einklappbare Abschnitte, Feedback-Knopf
 
-Upload-Ordner: `update-uebersicht/`
-
 - Tab „Benutzer“ heißt jetzt „Verwaltung“ (intern weiter `data-tab="benutzer"`), der Zähler „Verwaltung (n)“.
 - Einstellungen: „Hilfe & Kontakt“ und „Vorschlag oder Fehler melden“ sind ein Abschnitt „Hilfe & Rückmeldung“.
   Als einklappbare Abschnitte (`<details class="fold">`, bei jedem Besuch zu): Passwort ändern, Daten, Hilfe & Rückmeldung;
@@ -37,8 +33,6 @@ Upload-Ordner: `update-uebersicht/`
   Abschnitt auf und setzt den Cursor ins Nachrichtenfeld.
 
 ## 2026-10-13 – Vorschläge und Fehler melden
-
-Upload-Ordner: `update-rueckmeldungen/`
 
 - Neue Tabelle `feedback` (`SCHEMA_VERSION` 3, wird beim ersten Aufruf angelegt; ohne Fremdschlüssel, die Texte
   bleiben beim Löschen eines Kontos). Neu `lib/feedback.php`: `save_feedback()` (Art `idea`/`bug`, 5–2000 Zeichen,
@@ -57,15 +51,11 @@ Upload-Ordner: `update-rueckmeldungen/`
 
 ## 2026-10-13 – Hinweistexte bei gesperrtem Netz und am PC
 
-Upload-Ordner: `update-hinweistexte/`
-
 - `auth.php`: `BLOCKED_NETWORK_MESSAGE` ist jetzt der einzige Hinweistext, auch für `mobile_only`: „Entweder wird kein Handy
   oder Tablet verwendet, oder die Verbindung über dieses Netzwerk ist nicht möglich …“. Betreiber-Beispiele aus `ANLEITUNG.md` und den
   Config-Kommentaren entfernt.
 
 ## 2026-10-12 – Gesperrtes Netz: keine Anmeldeseite
-
-Upload-Ordner: `update-netzsperre-login/`
 
 - `auth.php`: neue Funktion `in_blocked_network()` und Konstante `BLOCKED_NETWORK_MESSAGE` (aus `access_restriction()`
   herausgelöst). `login.php` antwortet aus einem Netz in `blocked_networks` mit 403 und nur dem Hinweistext, auch bei
@@ -73,15 +63,11 @@ Upload-Ordner: `update-netzsperre-login/`
 
 ## 2026-10-12 – 5 Minuten pro Tag geschenkt
 
-Upload-Ordner: `update-geschenkte-minuten/`
-
 - `logic.js`: `GIFT_MINUTES = 5` wird in `flexByDay` zur gearbeiteten Zeit jedes Tages mit Einträgen addiert
   (nur Gleitzeit; Homeoffice-Quote und Prognose bleiben unverändert). `app.js`: Tagesvorschau im Formular rechnet
   mit. Test `test_flextime` angepasst.
 
 ## 2026-10-10 – Screenshots als Schaufenster, Fehler „null“ im Konto-Dialog
-
-Upload-Ordner: `update-konto-dialog/`
 
 - README: neun Screenshots (`docs/screenshots/`): alle drei Designs hell und dunkel, dabei Planung,
   Zeiterfassung, Einstellungen, Benutzerverwaltung, Tagesmenü, Neuigkeiten und drei Handy-Ansichten.
@@ -92,7 +78,7 @@ Upload-Ordner: `update-konto-dialog/`
 
 ## 2026-10-10 – Startbildschirm und untere Leiste der Android-App folgen dem Design
 
-Upload-Ordner: `update-manifest/` (`manifest.webmanifest` auf dem Server löschen)
+Hinweis: `manifest.webmanifest` auf dem Server löschen.
 
 - Ursache des weißen Startbildschirms und der weißen unteren Leiste: `manifest.webmanifest` hatte feste Farben
   `#ffffff`; Android nimmt Splash-Screen und Systemleisten der installierten App daraus.
@@ -106,15 +92,11 @@ Upload-Ordner: `update-manifest/` (`manifest.webmanifest` auf dem Server lösche
 
 ## 2026-10-10 – Leistenfarbe nach Rückkehr in die App
 
-Upload-Ordner: `update-leistenfarbe2/`
-
 - `design.js`: Beim Zurückkehren in die App (`visibilitychange`, `pageshow`) wird der `<meta name="theme-color">`
   ersetzt und die Farbe neu gesetzt. Android fällt dabei sonst auf die Manifest-Farbe (Weiß) zurück. Nicht
   auf einem Android-Gerät geprüft, nur der Testlauf im Desktop-Browser.
 
 ## 2026-10-10 – Wochentag-Auswahl nicht mehr abgeschnitten
-
-Upload-Ordner: `update-auswahlbreite/`
 
 - `.weekday-select select` hat in `app.css`, `klassisch.css` und `warm.css` `min-width: 15em` statt fester
   Breite, damit „Arbeitstag (nicht vorbelegt)“ in „Klassisch“ vollständig lesbar ist.
@@ -129,8 +111,6 @@ Kein Upload nötig (nur Repository).
 
 ## 2026-10-10 – Benutzername statt E-Mail-Adresse
 
-Upload-Ordner: `update-benutzername/`
-
 - Anmeldung, Einladung, Passwort-Link und Kontoverwaltung nutzen einen Benutzernamen: kleingeschrieben, 2–64
   Zeichen aus `a-z 0-9 . _ - @ +` (`normalize_username()` in `lib/auth.php`). Bestehende E-Mail-Adressen
   bleiben gültig, es ist keine Datenmigration nötig.
@@ -142,8 +122,8 @@ Upload-Ordner: `update-benutzername/`
 
 ## 2026-10-10 – Performance und Aufräumen (Code-Review)
 
-Upload-Ordner: `update-performance/` (enthält auch die geänderte `.htaccess` – lässt sich diese nicht
-speichern oder gibt es danach einen 500-Fehler, den Block `Cache-Control` darin wieder entfernen)
+Hinweis: Lässt sich die geänderte `.htaccess` nicht speichern oder gibt es danach einen 500-Fehler, den Block
+`Cache-Control` darin wieder entfernen.
 
 - Datenbank: Schema-Version in neuer Tabelle `schema_meta` (`SCHEMA_VERSION` in `lib/db.php`) statt
   Prüfung der „neuesten Tabelle“; spätere neue Spalten werden so nicht mehr übersehen. Die vorhandene
@@ -161,8 +141,6 @@ speichern oder gibt es danach einen 500-Fehler, den Block `Cache-Control` darin 
 
 ## 2026-10-10 – Navigationsleiste beim Start nicht mehr weiß
 
-Upload-Ordner: `update-leistenfarbe/`
-
 - `<meta name="theme-color">` steht jetzt vor `design.js` im `<head>` von `lib/app.html` und
   `lib/login.html`. Vorher fand `design.js` den Tag beim Laden noch nicht, sodass bis zum Ende des
   Ladens das fest eingetragene Weiß galt (in „Warm“/„Klassisch“ dunkel sichtbar als weiße Leiste).
@@ -170,8 +148,6 @@ Upload-Ordner: `update-leistenfarbe/`
   (`PAGE_COLORS`, muss zu den Stylesheets passen) und verfeinert sie nach dem Laden wie bisher.
 
 ## 2026-10-10 – Handy-Ansicht überarbeitet
-
-Upload-Ordner: `update-handy-ansicht/` (nach `update-handy-zugriff/` hochladen)
 
 - Systemleisten der installierten App: `design.js` setzt `<meta name="theme-color">` auf die Farbe oben
   auf der Seite (Kopfleiste in „Klassisch“, sonst der Seitenhintergrund), auch bei Design-, Farbmodus- und
@@ -192,14 +168,14 @@ Upload-Ordner: `update-handy-ansicht/` (nach `update-handy-zugriff/` hochladen)
 
 ## 2026-10-10 – Handy-App, Zugriffssperre, Vorbereitung für GitHub
 
-Upload-Ordner: `update-handy-zugriff/` – enthält auch alle Dateien aus `update-design/` (die Einträge vom
-05.10. darunter waren noch nicht hochgeladen) und repariert den Server nach dem Upload vom 09.10.
+Enthält auch alle Dateien der Einträge vom 05.10. darunter (waren noch nicht hochgeladen) und repariert den Server
+nach dem Upload vom 09.10.
 
 Eingebaut aus den Änderungen vom 09.10., die auf dem alten Stand vom 02.10. entstanden waren:
 
 - Reparatur: Am 09.10. wurden `lib/auth.php`, `lib/app.html`, `lib/login.html`, `lib/config.php` und
   `.htaccess` durch Fassungen vom 02.10. ersetzt. Die alte `auth.php` deklariert `admin_overview()` ein
-  zweites Mal (heute in `lib/admin.php`) → HTTP 500. Der Upload-Ordner enthält die aktuellen Fassungen.
+  zweites Mal (heute in `lib/admin.php`) → HTTP 500.
   `diagnose.php` vom Server löschen.
 - Installierbare Web-App: `manifest.webmanifest`, Symbole in `assets/icons/` (weißes Haus auf `#2563eb`),
   Manifest-, Icon- und Apple-Tags im `<head>` von `lib/app.html` und `lib/login.html`. Kein Service Worker.
@@ -210,15 +186,13 @@ Eingebaut aus den Änderungen vom 09.10., die auf dem alten Stand vom 02.10. ent
   ab, der Einladungslink bleibt gültig. Admins sind ausgenommen. `config.sample.php`: Block mit Standard
   „aus“.
 - Tests: `tests/test_access.py` (3 Tests), `PhpServer(extra_config)` in `tests/support.py`.
-- GitHub-Vorbereitung: `.gitignore` (Konfiguration, Datenbanken, `lokal/php/`, Exporte, Upload-Ordner,
+- GitHub-Vorbereitung: `.gitignore` (Konfiguration, Datenbanken, `lokal/php/`, Exporte,
   IDE-Dateien, `CLAUDE.local.md`), `lokal/data/.gitkeep`, `README.md`; `ANLEITUNG.md` allgemein
   umgeschrieben (kein Hoster, kein Schlüssel, kein persönlicher Pfad; neu: Konfiguration anlegen, Handy-App,
   Zugriff einschränken, nginx, lokal unter Linux). `lokal/starten.bat` nimmt `php` aus dem `PATH`, wenn
   `lokal/php/php.exe` fehlt.
 
 ## 2026-10-05 – Farbmodus-Schalter, Rahmenkontraste, Wochentag-Beschriftung
-
-Upload-Ordner: `update-design/` (zusammen mit den Einträgen darunter, jetzt in `update-handy-zugriff/`)
 
 - *Einstellungen → Darstellung → Farbmodus*: Automatisch (System), Hell oder Dunkel, pro Browser (localStorage
   `farbmodus`), auch auf der Anmeldeseite. `design.js` setzt `<html data-scheme>`; jedes Stylesheet hat die dunklen
@@ -231,8 +205,6 @@ Upload-Ordner: `update-design/` (zusammen mit den Einträgen darunter, jetzt in 
 
 ## 2026-10-05 – Drittes Design („Warm“)
 
-Upload-Ordner: `update-design/` (zusammen mit dem Eintrag darunter, jetzt in `update-handy-zugriff/`)
-
 - Neues Design „Warm“ (`assets/warm.css`, baut auf `app.css` auf; Unterschiede im Block „Warm: components“ am
   Ende): Elfenbein-/Sandtöne, gedämpfter Tonrot-Akzent, abgerundete Karten, Reiter als Segment-Schalter,
   Serifen-Überschriften. Kontrast geprüft wie bei den anderen (Text ≥ 4,5:1, Hover ≥ 3:1, hell und dunkel).
@@ -243,8 +215,6 @@ Upload-Ordner: `update-design/` (zusammen mit dem Eintrag darunter, jetzt in `up
   Menü): Textkontrast, Hover-Kontrast, Überlappungen, Abstände unter 6 px, abgeschnittene Texte, Seitenbreite.
 
 ## 2026-10-05 – Zweites Design („Klassisch“) und Darstellungsfehler
-
-Upload-Ordner: `update-design/`
 
 - Unter *Einstellungen → Darstellung* lässt sich zwischen „Modern“ (bisher, Standard) und „Klassisch“ wählen
   (eckig, Serifen-Überschriften, dunkelblaue Kopfleiste, Kalender als Raster). Neue Dateien `assets/klassisch.css`
@@ -261,21 +231,15 @@ Upload-Ordner: `update-design/`
 
 ## 2026-10-05 – Kontoverwaltung für Admins
 
-Upload-Ordner: `update-kontoverwaltung/` (enthält auch die Dateien aus `update-heute/`)
-
 - Nur für Admins: Kontenliste mit Suche/Filter und Detailansicht je Konto (Rolle, E-Mail, Sperren, Abmelden,
   Freigaben, Export, Löschen) sowie ein Protokoll aller Admin-Aktionen. Code in `lib/admin.php` (neu).
 - Datenbank: neue Tabelle `admin_log`, neue Spalte `users.locked_at` (werden automatisch angelegt).
 
 ## 2026-10-05 – Heutiger Tag im Kalender
 
-Upload-Ordner: `update-heute/`
-
 - Der heutige Tag hat einen Rahmen in der Akzentfarbe, die Tageszahl steht in einem kleinen farbigen Kreis.
 
 ## 2026-10-05 – Wochentage als Homeoffice/Büro, Neuigkeiten, Hilfe & Kontakt
-
-Upload-Ordner: `update-wochentage/`
 
 - **Wochentage:** Unter *Einstellungen → Wochentage* gibt es zusätzlich „Homeoffice“ und „Büro“. Solche
   Wochentage sind Arbeitstage und gelten ohne eigenen Planungseintrag als so geplant (Kalender, Prognose,
@@ -293,14 +257,10 @@ Upload-Ordner: `update-wochentage/`
 
 ## 2026-10-05 – Automatische Datensicherung
 
-Upload-Ordner: `update-backup/`
-
 - Alle 7 Tage (beim ersten Aufruf danach) Kopie der SQLite-Datenbank nach `data/backups/`, die letzten 8
   bleiben. Einstellbar mit `backup_days` / `backup_keep` in `lib/config.php`. Anzeige im Tab *Benutzer → Sicherung*.
 
 ## 2026-10-05 – Lese-Konten und Cache-Fix
-
-Upload-Ordner: `update-lesekonten/`
 
 - Neue Rolle **„Nur Lesen“**: kein eigenes Erfassen, sieht Planung, Einträge und Auswertung der Konten, die ein
   Admin unter „Darf sehen“ freigibt. Besitzer sehen unter *Einstellungen → Daten*, wer ihre Daten lesen darf.
