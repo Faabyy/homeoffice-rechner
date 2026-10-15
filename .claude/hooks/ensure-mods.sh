@@ -12,7 +12,7 @@ MARKETS=(
   "catch-me-up=oliverow/catch-me-up"
 )
 WANT=(
-  usage-bar-de@claude-mods cache-tax@claude-mods cache-weather-bar@claude-mods next-steps-cards@claude-mods
+  cache-tax@claude-mods next-steps-cards@claude-mods
   savvy-flow@claude-kit savvy-progress@claude-kit filetree@claude-code-filetree catch-me-up@catch-me-up
 )
 

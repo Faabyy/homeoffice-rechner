@@ -26,9 +26,7 @@
     }
   },
   "enabledPlugins": {
-    "usage-bar-de@claude-mods": true,
     "cache-tax@claude-mods": true,
-    "cache-weather-bar@claude-mods": true,
     "savvy-flow@claude-kit": true,
     "savvy-progress@claude-kit": true,
     "filetree@claude-code-filetree": true,
@@ -47,5 +45,11 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'for p in \"${CLAUDE_MODS_DIR:-/nonexistent}/statusbar/bar.py\" \"$CLAUDE_PROJECT_DIR/.claude/statusbar/bar.py\"; do [ -f \"$p\" ] && exec python3 \"$p\"; done'",
+    "padding": 0,
+    "refreshInterval": 5
   }
 }
