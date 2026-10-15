@@ -67,3 +67,7 @@ python -m unittest discover -s tests -t .
 
 PHP wird in `lokal/php/php.exe` (nur Windows), über die Umgebungsvariable `PHP_BIN` oder im `PATH`
 gesucht, der Browser automatisch oder über `BROWSER_BIN`.
+
+---
+
+Co-Authored-By: Claude Code
